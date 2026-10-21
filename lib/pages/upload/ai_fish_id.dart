@@ -5,10 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/pages/upload/ai_fish_result.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/pages/upload/ai_fish_result.dart';
 
 /// @desc AI识鱼页：拍照/相册 → 百炼识别 → 结果页
 class AiFishIdPage extends StatefulWidget {

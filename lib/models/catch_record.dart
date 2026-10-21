@@ -1,6 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
-import 'package:luji_app/models/gear.dart';
-import 'package:luji_app/models/spot.dart';
+import 'package:FishMark/models/gear.dart';
+import 'package:FishMark/models/spot.dart';
 
 /// @desc 鱼获记录
 class CatchRecord {

@@ -1,4 +1,4 @@
-import 'package:luji_app/config/log_util.dart';
+import 'package:FishMark/config/log_util.dart';
 
 /// @desc 本地模拟数据（Constants.useMock = true 时接管全部接口）
 /// 所有状态保存在内存中，模拟一次完整的用户会话：

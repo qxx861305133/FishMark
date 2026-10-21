@@ -5,10 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/config/theme_palettes.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/profile.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/config/theme_palettes.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/profile.dart';
 
 /// 可选主题色
 Map<String, ThemeData> _themes = {

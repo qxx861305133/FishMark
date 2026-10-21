@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/challenge.dart';
-import 'package:luji_app/models/feed.dart';
-import 'package:luji_app/pages/challenge/challenge_detail.dart';
-import 'package:luji_app/pages/challenge/challenge_list.dart';
-import 'package:luji_app/pages/upload/catch_upload.dart';
-import 'package:luji_app/widgets/empty_widget.dart';
-import 'package:luji_app/widgets/net_image.dart';
-import 'package:luji_app/widgets/section_header.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/challenge.dart';
+import 'package:FishMark/models/feed.dart';
+import 'package:FishMark/pages/challenge/challenge_detail.dart';
+import 'package:FishMark/pages/challenge/challenge_list.dart';
+import 'package:FishMark/pages/upload/catch_upload.dart';
+import 'package:FishMark/widgets/empty_widget.dart';
+import 'package:FishMark/widgets/net_image.dart';
+import 'package:FishMark/widgets/section_header.dart';
 
 /// @desc 首页Tab：Banner轮播 + 挑战入口 + 鱼获动态
 class HomeTab extends StatefulWidget {

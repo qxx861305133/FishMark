@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/pages/upload/catch_upload.dart';
-import 'package:luji_app/widgets/empty_widget.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/pages/upload/catch_upload.dart';
+import 'package:FishMark/widgets/empty_widget.dart';
 
 /// @desc AI识鱼结果页：轮询任务结果 → 确认鱼种 → 去记录鱼获
 class AiFishResultPage extends StatefulWidget {

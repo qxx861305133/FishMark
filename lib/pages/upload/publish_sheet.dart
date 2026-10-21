@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/pages/upload/ai_fish_id.dart';
-import 'package:luji_app/pages/upload/catch_upload.dart';
-import 'package:luji_app/pages/upload/gear_upload.dart';
-import 'package:luji_app/pages/upload/spot_upload.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/pages/upload/ai_fish_id.dart';
+import 'package:FishMark/pages/upload/catch_upload.dart';
+import 'package:FishMark/pages/upload/gear_upload.dart';
+import 'package:FishMark/pages/upload/spot_upload.dart';
 
 /// @desc 中间发布按钮唤起的上传面板
 class PublishSheet {

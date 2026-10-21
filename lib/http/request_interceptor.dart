@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
-import 'package:luji_app/config/global.dart';
-import 'package:luji_app/config/log_util.dart';
+import 'package:FishMark/config/global.dart';
+import 'package:FishMark/config/log_util.dart';
 
 /// @desc 请求拦截器
 class RequestInterceptors extends InterceptorsWrapper {

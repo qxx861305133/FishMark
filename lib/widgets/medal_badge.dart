@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:luji_app/config/constants.dart';
+import 'package:FishMark/config/constants.dart';
 
 /// @desc 勋章稀有度徽标
 class MedalBadge extends StatelessWidget {

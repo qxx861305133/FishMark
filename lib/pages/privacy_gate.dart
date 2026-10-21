@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/global.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/pages/auth/login.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/global.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/pages/auth/login.dart';
 
 /// @desc 隐私协议授权页
 class PrivacyGatePage extends StatefulWidget {

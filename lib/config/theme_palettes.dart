@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:luji_app/config/constants.dart';
+import 'package:FishMark/config/constants.dart';
 
 /// Material 3 主题配置
 class AppTheme {

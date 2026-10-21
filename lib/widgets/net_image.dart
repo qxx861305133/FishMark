@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:luji_app/config/constants.dart';
+import 'package:FishMark/config/constants.dart';
 
 /// @desc 网络图片（带占位与错误兜底）
 class NetImage extends StatelessWidget {

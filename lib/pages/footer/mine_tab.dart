@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/user.dart';
-import 'package:luji_app/pages/auth/login.dart';
-import 'package:luji_app/pages/challenge/challenge_list.dart';
-import 'package:luji_app/pages/explore/fish_species_list.dart';
-import 'package:luji_app/pages/gear/gear_library.dart';
-import 'package:luji_app/pages/medal/medal_wall.dart';
-import 'package:luji_app/pages/mine/digital_resume.dart';
-import 'package:luji_app/pages/subscription/subscription.dart';
-import 'package:luji_app/provider/profile.dart';
-import 'package:luji_app/widgets/net_image.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/user.dart';
+import 'package:FishMark/pages/auth/login.dart';
+import 'package:FishMark/pages/challenge/challenge_list.dart';
+import 'package:FishMark/pages/explore/fish_species_list.dart';
+import 'package:FishMark/pages/gear/gear_library.dart';
+import 'package:FishMark/pages/medal/medal_wall.dart';
+import 'package:FishMark/pages/mine/digital_resume.dart';
+import 'package:FishMark/pages/subscription/subscription.dart';
+import 'package:FishMark/provider/profile.dart';
+import 'package:FishMark/widgets/net_image.dart';
 
 /// @desc 我的Tab：用户头卡 + 数据总览 + 功能入口
 class MineTab extends StatefulWidget {

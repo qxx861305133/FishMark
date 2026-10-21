@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/catch_record.dart';
-import 'package:luji_app/pages/report/report_preview.dart';
-import 'package:luji_app/pages/upload/catch_upload.dart';
-import 'package:luji_app/widgets/empty_widget.dart';
-import 'package:luji_app/widgets/net_image.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/catch_record.dart';
+import 'package:FishMark/pages/report/report_preview.dart';
+import 'package:FishMark/pages/upload/catch_upload.dart';
+import 'package:FishMark/widgets/empty_widget.dart';
+import 'package:FishMark/widgets/net_image.dart';
 
 /// @desc 战报Tab：我的鱼获战报列表 + 生成分享卡
 class ReportTab extends StatefulWidget {

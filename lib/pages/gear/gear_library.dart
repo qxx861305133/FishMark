@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/gear.dart';
-import 'package:luji_app/pages/upload/gear_upload.dart';
-import 'package:luji_app/widgets/empty_widget.dart';
-import 'package:luji_app/widgets/net_image.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/gear.dart';
+import 'package:FishMark/pages/upload/gear_upload.dart';
+import 'package:FishMark/widgets/empty_widget.dart';
+import 'package:FishMark/widgets/net_image.dart';
 
 /// @desc 装备库页：分类Tab + 装备列表 + 组合
 class GearLibraryPage extends StatefulWidget {

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/pages/footer/explore_tab.dart';
-import 'package:luji_app/pages/footer/home_tab.dart';
-import 'package:luji_app/pages/footer/mine_tab.dart';
-import 'package:luji_app/pages/footer/report_tab.dart';
-import 'package:luji_app/pages/upload/publish_sheet.dart';
-import 'package:luji_app/provider/tab_provider.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/pages/footer/explore_tab.dart';
+import 'package:FishMark/pages/footer/home_tab.dart';
+import 'package:FishMark/pages/footer/mine_tab.dart';
+import 'package:FishMark/pages/footer/report_tab.dart';
+import 'package:FishMark/pages/upload/publish_sheet.dart';
+import 'package:FishMark/provider/tab_provider.dart';
 
 /// @desc 主框架：底部导航（首页/探索/发布/战报/我的）
 class HomePage extends StatefulWidget {

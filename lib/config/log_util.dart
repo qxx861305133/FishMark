@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:luji_app/config/constants.dart';
+import 'package:FishMark/config/constants.dart';
 
 /// @desc 日志工具
 class LogUtil {

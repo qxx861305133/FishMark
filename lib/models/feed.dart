@@ -1,6 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
-import 'package:luji_app/models/catch_record.dart';
-import 'package:luji_app/models/user.dart';
+import 'package:FishMark/models/catch_record.dart';
+import 'package:FishMark/models/user.dart';
 
 /// @desc 鱼获动态（社区Feed）
 class Feed {

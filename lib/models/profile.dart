@@ -1,5 +1,5 @@
 // ignore_for_file: non_constant_identifier_names
-import 'package:luji_app/models/user.dart';
+import 'package:FishMark/models/user.dart';
 
 /// @desc 持久化系统配置
 class Profile {

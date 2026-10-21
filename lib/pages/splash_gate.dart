@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/global.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/pages/auth/login.dart';
-import 'package:luji_app/pages/home.dart';
-import 'package:luji_app/pages/privacy_gate.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/global.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/pages/auth/login.dart';
+import 'package:FishMark/pages/home.dart';
+import 'package:FishMark/pages/privacy_gate.dart';
 
 /// @desc 闪屏分流：隐私协议 -> 登录 / 首页
 class SplashGate extends StatefulWidget {

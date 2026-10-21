@@ -6,11 +6,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:luji_app/config/api_urls.dart';
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/request_interceptor.dart';
-import 'package:luji_app/mock/mock_data.dart';
+import 'package:FishMark/config/api_urls.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/request_interceptor.dart';
+import 'package:FishMark/mock/mock_data.dart';
 
 /// API: 数据请求接口
 class Api {

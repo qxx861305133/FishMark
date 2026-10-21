@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/pages/home.dart';
-import 'package:luji_app/widgets/round_button.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/pages/home.dart';
+import 'package:FishMark/widgets/round_button.dart';
 
 /// @desc 兴趣/地区初始化（首次登录引导）
 class ProfileSetupPage extends StatefulWidget {

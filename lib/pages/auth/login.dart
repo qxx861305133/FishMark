@@ -3,16 +3,16 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/global.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/index.dart';
-import 'package:luji_app/pages/auth/profile_setup.dart';
-import 'package:luji_app/pages/auth/sms_code.dart';
-import 'package:luji_app/pages/home.dart';
-import 'package:luji_app/provider/profile.dart';
-import 'package:luji_app/widgets/round_button.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/global.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/index.dart';
+import 'package:FishMark/pages/auth/profile_setup.dart';
+import 'package:FishMark/pages/auth/sms_code.dart';
+import 'package:FishMark/pages/home.dart';
+import 'package:FishMark/provider/profile.dart';
+import 'package:FishMark/widgets/round_button.dart';
 
 /// @desc 登录页（手机号 + 验证码）
 class LoginPage extends StatefulWidget {

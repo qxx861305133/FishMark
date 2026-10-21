@@ -5,12 +5,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/catch_record.dart';
-import 'package:luji_app/pages/report/report_preview.dart';
-import 'package:luji_app/widgets/round_button.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/catch_record.dart';
+import 'package:FishMark/pages/report/report_preview.dart';
+import 'package:FishMark/widgets/round_button.dart';
 
 /// @desc 鱼获记录上传页
 class CatchUploadPage extends StatefulWidget {

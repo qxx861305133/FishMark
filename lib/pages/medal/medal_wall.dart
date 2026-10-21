@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/challenge.dart';
-import 'package:luji_app/widgets/empty_widget.dart';
-import 'package:luji_app/widgets/medal_badge.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/challenge.dart';
+import 'package:FishMark/widgets/empty_widget.dart';
+import 'package:FishMark/widgets/medal_badge.dart';
 
 /// @desc 勋章墙页：按稀有度分组展示
 class MedalWallPage extends StatefulWidget {

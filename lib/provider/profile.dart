@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:luji_app/config/global.dart';
-import 'package:luji_app/models/profile.dart';
-import 'package:luji_app/models/user.dart';
+import 'package:FishMark/config/global.dart';
+import 'package:FishMark/models/profile.dart';
+import 'package:FishMark/models/user.dart';
 
 class ProfileNotifier extends ChangeNotifier {
   Profile get _profile => Global.profile;

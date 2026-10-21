@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/catch_record.dart';
-import 'package:luji_app/widgets/net_image.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/catch_record.dart';
+import 'package:FishMark/widgets/net_image.dart';
 
 /// @desc 鱼种详情页：图鉴信息 + 推荐饵 + 首次解锁记录
 class FishSpeciesDetailPage extends StatefulWidget {

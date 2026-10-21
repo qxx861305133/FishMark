@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:luji_app/config/constants.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/http/api.dart';
-import 'package:luji_app/models/catch_record.dart';
-import 'package:luji_app/widgets/net_image.dart';
-import 'package:luji_app/widgets/round_button.dart';
+import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/http/api.dart';
+import 'package:FishMark/models/catch_record.dart';
+import 'package:FishMark/widgets/net_image.dart';
+import 'package:FishMark/widgets/round_button.dart';
 
 /// @desc 战报分享卡预览页（模板选择 + 保存/分享）
 class ReportPreviewPage extends StatefulWidget {

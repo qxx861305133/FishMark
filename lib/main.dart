@@ -7,11 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import 'package:luji_app/config/global.dart';
-import 'package:luji_app/config/log_util.dart';
-import 'package:luji_app/pages/splash_gate.dart';
-import 'package:luji_app/provider/profile.dart';
-import 'package:luji_app/provider/tab_provider.dart';
+import 'package:FishMark/config/global.dart';
+import 'package:FishMark/config/log_util.dart';
+import 'package:FishMark/pages/splash_gate.dart';
+import 'package:FishMark/provider/profile.dart';
+import 'package:FishMark/provider/tab_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
