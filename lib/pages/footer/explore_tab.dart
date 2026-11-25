@@ -54,6 +54,9 @@ class _ExploreTabState extends State<ExploreTab> with WidgetsBindingObserver {
   bool _satellite = false; // 底图样式：普通/卫星
   LatLng? _userLatLng; // 当前定位坐标
 
+  // 点击地图选中的位置（绿色圆点标记）
+  LatLng? _pickedPoint;
+
   // mock x/y（0~1）映射到中心附近的经纬度
   LatLng _spotLatLng(ExploreSpot spot) {
     return LatLng(
@@ -192,7 +195,21 @@ class _ExploreTabState extends State<ExploreTab> with WidgetsBindingObserver {
       _selected = spot;
       _starred = false;
       _mode = _ExploreMode.detail;
+      _pickedPoint = null;
     });
+  }
+
+  // 点击地图空白处：选中该位置（绿色圆点标记）
+  void _onMapTap(LatLng point) {
+    if (_mode == _ExploreMode.detail) {
+      setState(() => _mode = _ExploreMode.map);
+      return;
+    }
+    // 重复点击同一位置视为取消选中
+    final same = _pickedPoint != null &&
+        (point.latitude - _pickedPoint!.latitude).abs() < 1e-6 &&
+        (point.longitude - _pickedPoint!.longitude).abs() < 1e-6;
+    setState(() => _pickedPoint = same ? null : point);
   }
 
   void _openFishGuide() {
@@ -220,6 +237,8 @@ class _ExploreTabState extends State<ExploreTab> with WidgetsBindingObserver {
       if (!mounted) return;
       setState(() {
         _userLatLng = LatLng(pos.latitude, pos.longitude);
+        // 重新定位后绿点回到当前位置（清除点击选中位置）
+        _pickedPoint = null;
       });
       final ctrl = _mapCtrl;
       if (ctrl != null) {
@@ -264,26 +283,22 @@ class _ExploreTabState extends State<ExploreTab> with WidgetsBindingObserver {
                   initialZoom: 15, // 街道级，拖动幅度与设计稿一致
                   minZoom: 3,
                   maxZoom: 18,
-                  onTap: (_, __) {
-                    if (_mode == _ExploreMode.detail) {
-                      setState(() => _mode = _ExploreMode.map);
-                    }
-                  },
+                  onTap: (_, point) => _onMapTap(point),
                 ),
                 children: [
-                  ...tdtTileLayers(satellite: _satellite),
-                  // 当前位置（绿点）
-                  if (_userLatLng != null)
+                  ...tdtTileLayers(satellite: _satellite, context: context),
+                  // 定位/选中合一的绿点：默认显示当前定位，点击地图后移动到点击位置
+                  if ((_pickedPoint ?? _userLatLng) != null)
                     MarkerLayer(
                       markers: [
                         Marker(
-                          point: _userLatLng!,
-                          width: 14.w,
-                          height: 14.w,
+                          point: _pickedPoint ?? _userLatLng!,
+                          width: 18.w,
+                          height: 18.w,
                           alignment: Alignment.center,
                           child: Container(
-                            width: 14.w,
-                            height: 14.w,
+                            width: 18.w,
+                            height: 18.w,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _kPinGreen,
@@ -291,6 +306,12 @@ class _ExploreTabState extends State<ExploreTab> with WidgetsBindingObserver {
                                 color: Colors.white,
                                 width: 2.w,
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6.w,
+                                ),
+                              ],
                             ),
                           ),
                         ),

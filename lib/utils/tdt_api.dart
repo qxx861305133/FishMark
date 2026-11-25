@@ -54,7 +54,7 @@ class TdtApi {
       // resultType: 1=POI列表 2=建议词(无坐标) 3=统计 …；POI 可能在 pois 字段
       final pois = data['pois'];
       if (pois is List && pois.isNotEmpty) {
-        return pois.map(_parsePoi).whereType<TdtPoi>().toList();
+        return _dedupe(pois.map(_parsePoi).whereType<TdtPoi>().toList());
       }
 
       // 建议词列表：取第一条作为新关键词再精确搜索一次
@@ -70,6 +70,16 @@ class TdtApi {
     } catch (_) {
       return const [];
     }
+  }
+
+  // 联想结果去重：天地图对同一地点可能返回多条重复 POI
+  static List<TdtPoi> _dedupe(List<TdtPoi> list) {
+    final seen = <String>{};
+    return list.where((p) {
+      final key = '${p.name}|${p.address}|${p.lat.toStringAsFixed(5)}|'
+          '${p.lng.toStringAsFixed(5)}';
+      return seen.add(key);
+    }).toList();
   }
 
   static TdtPoi? _parsePoi(dynamic item) {
@@ -124,6 +134,29 @@ class TdtApi {
       }
       if (city.isEmpty || city == province) return province;
       return '$province · $city';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 逆地理编码：坐标 → 完整地址文本（选点场景）
+  /// 优先 formatted_address，失败时退回「省 · 市」，返回 null 表示查询失败
+  static Future<String?> reverseGeocodeDetail(double lat, double lng) async {
+    try {
+      final resp = await _dio.get(
+        'https://api.tianditu.gov.cn/geocoder',
+        queryParameters: {
+          'postStr': '{"lon":$lng,"lat":$lat,"ver":1}',
+          'tk': tdtApiKey,
+        },
+      );
+      final data = resp.data;
+      if (data is! Map) return null;
+      final result = data['result'];
+      if (result is! Map) return null;
+      final formatted = (result['formatted_address'] ?? '').toString();
+      if (formatted.isNotEmpty) return formatted;
+      return reverseGeocode(lat, lng);
     } catch (_) {
       return null;
     }

@@ -30,7 +30,10 @@ class _SpotMapPageState extends State<SpotMapPage>
   List<TdtPoi> _results = [];
   // 当前选中的 POI（null 时用地图中心点坐标）
   TdtPoi? _selectedPoi;
+  // 拖动地图后的中心点地址（逆地理编码，直接填入搜索输入框作为选点结果）
+  String _pickedAddress = '';
   Timer? _debounce;
+  Timer? _pickDebounce;
   bool _searching = false;
 
   final TextEditingController _searchController = TextEditingController();
@@ -80,9 +83,32 @@ class _SpotMapPageState extends State<SpotMapPage>
         _selectedPoi = null;
       });
       _mapCtrl?.move(_userLatLng!, 15);
+      // 默认区域也预填地址
+      _schedulePickAddress();
     } catch (_) {
       // 定位失败不阻塞选点流程，地图保持兜底中心
     }
+  }
+
+  // 拖动地图停止 400ms 后，逆地理编码中心点地址并填入输入框（防止拖动过程频繁请求）
+  void _schedulePickAddress() {
+    _pickDebounce?.cancel();
+    _pickDebounce = Timer(const Duration(milliseconds: 400), () async {
+      LatLng center;
+      try {
+        center = _mapCtrl?.camera.center ?? _userLatLng ?? _kFallbackCenter;
+      } catch (_) {
+        center = _userLatLng ?? _kFallbackCenter;
+      }
+      final addr = await TdtApi.reverseGeocodeDetail(
+          center.latitude, center.longitude);
+      if (!mounted) return;
+      setState(() => _pickedAddress = addr ?? '');
+      // 选点地址直接显示在输入框（联想结果展示中时不覆盖用户输入）
+      if (_pickedAddress.isNotEmpty && _results.isEmpty) {
+        _searchController.text = _pickedAddress;
+      }
+    });
   }
 
   // 搜索框输入（400ms 防抖 → 天地图地点搜索）
@@ -138,6 +164,7 @@ class _SpotMapPageState extends State<SpotMapPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _debounce?.cancel();
+    _pickDebounce?.cancel();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -180,15 +207,18 @@ class _SpotMapPageState extends State<SpotMapPage>
                     initialZoom: 15,
                     minZoom: 3,
                     maxZoom: 18,
-                    // 拖动地图后清除已选联想项（中心 pin 即选点）
+                    // 拖动地图后清除已选联想项（中心 pin 即选点），并逆编码中心点地址
                     onPositionChanged: (camera, hasGesture) {
-                      if (hasGesture && _selectedPoi != null) {
-                        setState(() => _selectedPoi = null);
+                      if (hasGesture) {
+                        if (_selectedPoi != null) {
+                          setState(() => _selectedPoi = null);
+                        }
+                        _schedulePickAddress();
                       }
                     },
                   ),
                   children: [
-                    ...tdtTileLayers(),
+                    ...tdtTileLayers(context: context),
                     // 当前定位（绿点）
                     if (_userLatLng != null)
                       MarkerLayer(
@@ -230,35 +260,6 @@ class _SpotMapPageState extends State<SpotMapPage>
                     ),
                   ),
                 ),
-                // 当前选中地点名（贴在 pin 上方）
-                if (_selectedPoi != null)
-                  Positioned(
-                    left: 24.w,
-                    right: 24.w,
-                    bottom: 12.w,
-                    child: IgnorePointer(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 12.w, vertical: 8.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: Text(
-                          _selectedPoi!.address.isEmpty
-                              ? _selectedPoi!.name
-                              : '${_selectedPoi!.name} · ${_selectedPoi!.address}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Constants.INK,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -316,7 +317,7 @@ class _SpotMapPageState extends State<SpotMapPage>
         ),
       );
     }
-    // 空态：输入关键词搜索，或提示选中了当前区域
+    // 空态：提示拖动选点（选点地址直接显示在输入框内）
     if (_results.isEmpty) {
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -327,11 +328,9 @@ class _SpotMapPageState extends State<SpotMapPage>
             SizedBox(width: 8.w),
             Expanded(
               child: Text(
-                _selectedPoi != null
-                    ? '已选择：${_selectedPoi!.name}'
-                    : (_userLatLng != null
-                        ? '已定位到当前位置，可直接拖动地图选点'
-                        : '输入关键词搜索钓点地址'),
+                _userLatLng != null
+                    ? '已定位到当前位置，可直接拖动地图选点'
+                    : '输入关键词搜索钓点地址，或拖动地图选点',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 13.sp, color: Constants.GRAY_LIGHT),
@@ -400,7 +399,7 @@ class _SpotMapPageState extends State<SpotMapPage>
   }
 
   // 下一步：带选中地点信息进入填写页
-  void _goNext() {
+  Future<void> _goNext() async {
     LatLng center;
     String name = '';
     String address = '';
@@ -415,7 +414,16 @@ class _SpotMapPageState extends State<SpotMapPage>
       } catch (_) {
         center = _userLatLng ?? _kFallbackCenter;
       }
+      // 拖动选点：地址未就绪时补一次逆地理编码，确保带入填写页
+      address = _pickedAddress;
+      if (address.isEmpty) {
+        final addr = await TdtApi.reverseGeocodeDetail(
+            center.latitude, center.longitude);
+        address = addr ?? '';
+        if (mounted) setState(() => _pickedAddress = address);
+      }
     }
+    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => SpotInfoPage(

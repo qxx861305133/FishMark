@@ -42,11 +42,15 @@ class _SpotInfoPageState extends State<SpotInfoPage> {
 
   late final TextEditingController _nameController =
       TextEditingController(text: widget.initialName);
+  // 地址：上一页选点带入，可编辑修改后参与保存
+  late final TextEditingController _addrController =
+      TextEditingController(text: widget.initialAddress);
   late final TextEditingController _descController = TextEditingController();
 
   @override
   void dispose() {
     _nameController.dispose();
+    _addrController.dispose();
     _descController.dispose();
     super.dispose();
   }
@@ -121,7 +125,7 @@ class _SpotInfoPageState extends State<SpotInfoPage> {
       // 提交钓点信息
       final result = await Api().post('spot_submit', data: {
         'name': name,
-        'address': widget.initialAddress,
+        'address': _addrController.text.trim(),
         'type': _waterType,
         'desc': _descController.text.trim(),
         'lat': widget.latLng?.latitude,
@@ -199,30 +203,28 @@ class _SpotInfoPageState extends State<SpotInfoPage> {
               ],
             ),
           ),
-          // 地址（上一页选点带入，只读展示）
-          if (widget.initialAddress.isNotEmpty) ...[
-            SizedBox(
-              height: 44.w,
-              child: Row(
-                children: [
-                  _label('地址'),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      widget.initialAddress,
-                      textAlign: TextAlign.end,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Constants.GRAY,
-                      ),
+          // 地址（上一页选点带入，可编辑）
+          SizedBox(
+            height: 44.w,
+            child: Row(
+              children: [
+                _label('地址'),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: TextFormField(
+                    controller: _addrController,
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Constants.GRAY,
                     ),
+                    decoration: _inputDecoration(hint: '请填写钓点地址'),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
           _divider(),
           // 水域类型
           Column(
@@ -529,9 +531,11 @@ class _SpotInfoPageState extends State<SpotInfoPage> {
 }
 
 /// 无边框输入装饰
-InputDecoration _inputDecoration() {
-  return const InputDecoration(
+InputDecoration _inputDecoration({String? hint}) {
+  return InputDecoration(
     isCollapsed: true,
     border: InputBorder.none,
+    hintText: hint,
+    hintStyle: TextStyle(color: Constants.GRAY_LIGHT, fontSize: 14.sp),
   );
 }
