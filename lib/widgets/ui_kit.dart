@@ -352,6 +352,7 @@ class FillInput extends StatelessWidget {
   final bool obscureText;
   final ValueChanged<String>? onChanged;
   final FocusNode? focusNode;
+  final bool readOnly;
 
   const FillInput({
     super.key,
@@ -363,6 +364,7 @@ class FillInput extends StatelessWidget {
     this.obscureText = false,
     this.onChanged,
     this.focusNode,
+    this.readOnly = false,
   });
 
   @override
@@ -387,6 +389,7 @@ class FillInput extends StatelessWidget {
               keyboardType: keyboardType,
               obscureText: obscureText,
               onChanged: onChanged,
+              readOnly: readOnly,
               style: TextStyle(fontSize: 15.sp, color: Constants.INK),
               decoration: InputDecoration(
                 isCollapsed: true,
