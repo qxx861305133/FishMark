@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:remixicon/remixicon.dart';
 
-import 'package:FishMark/config/constants.dart';
-import 'package:FishMark/config/log_util.dart';
-import 'package:FishMark/http/api.dart';
-import 'package:FishMark/models/subscription.dart';
-import 'package:FishMark/widgets/round_button.dart';
+import 'package:FishMark/config/global.dart';
+import 'package:FishMark/mock/mine_data.dart';
+import 'package:FishMark/widgets/ui_kit.dart';
 
-/// @desc 订阅页：Free / Pro / Master 套餐对比 + 购买
+/// @desc 6.1 订阅系统 - 会员中心
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
 
@@ -17,238 +17,79 @@ class SubscriptionPage extends StatefulWidget {
 }
 
 class _SubscriptionPageState extends State<SubscriptionPage> {
-  final List<SubscriptionPlan> _plans = [];
-  bool _loading = true;
-  bool _isSubmiting = false;
-  // 当前选中套餐
-  int _selected = 0;
+  static const Color _gold = Color(0xFFE8B34B);
+  static const Color _goldLight = Color(0xFFF0C060);
+  static const Color _navy = Color(0xFF0F1829);
+  static const Color _cardNavy = Color(0xFF131E30);
+
+  final PageController _planController =
+      PageController(viewportFraction: 0.85, initialPage: 1);
+  int _planIndex = 1;
+  int _billingIndex = 0;
 
   @override
-  void initState() {
-    super.initState();
-    _loadPlans();
-  }
-
-  Future<void> _loadPlans() async {
-    try {
-      final result = await Api().get('subscription_plans');
-      if (!mounted) return;
-      if (result['success'] && result['data'] is List) {
-        int selected = 0;
-        for (final item in result['data']) {
-          final plan =
-              SubscriptionPlan.fromJson(Map<String, dynamic>.from(item));
-          if (plan.recommended == true) selected = _plans.length;
-          _plans.add(plan);
-        }
-        setState(() {
-          _loading = false;
-          _selected = selected;
-        });
-      } else {
-        setState(() => _loading = false);
-      }
-    } catch (e) {
-      LogUtil.e('套餐加载失败: $e');
-      if (!mounted) return;
-      setState(() => _loading = false);
-    }
-  }
-
-  // 购买订阅
-  Future<void> _handleBuy() async {
-    if (_plans.isEmpty) return;
-    final plan = _plans[_selected];
-    if (plan.current == true) {
-      Fluttertoast.showToast(msg: '当前已是该套餐');
-      return;
-    }
-    setState(() => _isSubmiting = true);
-    try {
-      final result = await Api().post('subscription_buy', data: {
-        'rid': plan.rid,
-      });
-      if (!mounted) return;
-      setState(() => _isSubmiting = false);
-      if (result['success']) {
-        Fluttertoast.showToast(msg: '订阅成功，尽享权益');
-        _loadPlans();
-      } else {
-        Fluttertoast.showToast(msg: result['status']['message']);
-      }
-    } catch (e) {
-      LogUtil.e('订阅购买失败: $e');
-      if (!mounted) return;
-      setState(() => _isSubmiting = false);
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
-    }
+  void dispose() {
+    _planController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Constants.BG_COLOR,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text('订阅', style: TextStyle(fontSize: 34.sp)),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.all(32.w),
-                    children: [
-                      // 头部
-                      Text(
-                        '解锁更完整的路亚体验',
-                        style: TextStyle(
-                          fontSize: 40.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      SizedBox(height: 8.w),
-                      Text(
-                        'AI识鱼次数、战报模板、图鉴权益随档位升级',
-                        style: TextStyle(
-                          fontSize: 26.sp,
-                          color: Constants.TEXT_SECONDARY_COLOR,
-                        ),
-                      ),
-                      SizedBox(height: 32.w),
-                      // 套餐卡
-                      ..._plans.asMap().entries.map(
-                            (entry) => _buildPlanCard(
-                              entry.key,
-                              entry.value,
-                            ),
-                          ),
-                    ],
-                  ),
-                ),
-                // 底部购买按钮
-                if (_plans.isNotEmpty) _buildBottomBar(),
-              ],
-            ),
-    );
-  }
-
-  // 套餐卡
-  Widget _buildPlanCard(int index, SubscriptionPlan plan) {
-    final selected = index == _selected;
-    final color = _tierColor(plan.tier);
-    return GestureDetector(
-      onTap: () => setState(() => _selected = index),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 24.w),
-        padding: EdgeInsets.all(32.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24.w),
-          border: Border.all(
-            color: selected ? color : Colors.transparent,
-            width: 3.w,
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.15),
-                    blurRadius: 16.w,
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: _navy,
+        body: Stack(
           children: [
-            Row(
-              children: [
-                Text(
-                  plan.name ?? '',
-                  style: TextStyle(
-                    fontSize: 34.sp,
-                    fontWeight: FontWeight.w700,
-                    color: color,
+            // 顶部暖金色光晕
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: const Alignment(0.2, 0.55),
+                    colors: [const Color(0xFF3D2F14), _navy],
                   ),
                 ),
-                SizedBox(width: 16.w),
-                if (plan.recommended == true)
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16.w, vertical: 6.w),
-                    decoration: BoxDecoration(
-                      color: Constants.HIGHLIGHT_COLOR,
-                      borderRadius: BorderRadius.circular(8.w),
-                    ),
-                    child: Text(
-                      '推荐',
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
+              ),
+            ),
+            // 右下角大 V 水印
+            Positioned(
+              right: -30.w,
+              bottom: 130.w,
+              child: _watermarkV(),
+            ),
+            // 内容
+            SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  _buildNavBar(context),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.only(bottom: 24.w),
+                      child: Column(
+                        children: [
+                          _buildPlanCarousel(),
+                          SizedBox(height: 28.w),
+                          _buildBillingCards(),
+                          SizedBox(height: 44.w),
+                          _buildSectionHeader(),
+                          SizedBox(height: 26.w),
+                          _buildBenefits(),
+                        ],
                       ),
                     ),
                   ),
-                if (plan.current == true) ...[
-                  SizedBox(width: 12.w),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16.w, vertical: 6.w),
-                    decoration: BoxDecoration(
-                      color: Constants.PRIMARY_COLOR.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8.w),
-                    ),
-                    child: Text(
-                      '当前套餐',
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        color: Constants.PRIMARY_COLOR,
-                      ),
+                  // 底部开通按钮
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20.w, 12.w, 20.w, 20.w),
+                      child: _buildSubscribeButton(),
                     ),
                   ),
                 ],
-                const Spacer(),
-                Text(
-                  plan.tier == 'free' ? '免费' : '¥${plan.price ?? 0}',
-                  style: TextStyle(
-                    fontSize: 36.sp,
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                  ),
-                ),
-                if (plan.tier != 'free' && plan.duration_months != null)
-                  Text(
-                    ' /${plan.duration_months}月',
-                    style: TextStyle(
-                      fontSize: 22.sp,
-                      color: Constants.TEXT_LIGHT_COLOR,
-                    ),
-                  ),
-              ],
-            ),
-            SizedBox(height: 24.w),
-            // 权益列表
-            ...(plan.privileges ?? []).map(
-              (privilege) => Padding(
-                padding: EdgeInsets.only(bottom: 12.w),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle,
-                        size: 28.w, color: color),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Text(
-                        privilege,
-                        style: TextStyle(
-                          fontSize: 26.sp,
-                          color: Constants.TEXT_DEFAULT_COLOR,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ],
@@ -257,30 +98,400 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     );
   }
 
-  // 底部购买
-  Widget _buildBottomBar() {
-    return SafeArea(
-      child: Container(
-        color: Colors.white,
-        padding: EdgeInsets.fromLTRB(32.w, 16.w, 32.w, 16.w),
-        child: RoundButton(
-          text: '立即开通',
-          loading: _isSubmiting,
-          onPressed: _handleBuy,
+  // ===== 顶部导航：左返回 / 中标题 / 右恢复购买（Row 布局，互不遮盖）=====
+  Widget _buildNavBar(BuildContext context) {
+    return SizedBox(
+      height: 56.w,
+      child: Row(
+        children: [
+          SizedBox(width: 12.w),
+          CircleBackButton(onTap: () => Navigator.of(context).maybePop()),
+          Expanded(
+            child: Center(
+              child: Text(
+                Global.t('会员中心', 'Membership'),
+                style: TextStyle(
+                  fontSize: 17.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Fluttertoast.showToast(
+                msg: Global.t('已发起恢复购买（演示）', 'Restore initiated (demo)')),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 6.w),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15.r),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: Text(
+                Global.t('恢复购买', 'Restore'),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 16.w),
+        ],
+      ),
+    );
+  }
+
+  // ===== 套餐轮播 =====
+  Widget _buildPlanCarousel() {
+    return SizedBox(
+      height: 116.w,
+      child: PageView.builder(
+        controller: _planController,
+        itemCount: MineData.vipPlans.length,
+        onPageChanged: (index) => setState(() => _planIndex = index),
+        itemBuilder: (_, index) => _buildPlanCard(index),
+      ),
+    );
+  }
+
+  // 套餐卡
+  Widget _buildPlanCard(int index) {
+    final plan = MineData.vipPlans[index];
+    final bool active = index == _planIndex;
+
+    BoxDecoration decoration;
+    Color titleColor;
+    Color descColor;
+    switch (index) {
+      case 1: // Pro 专业版：金色
+        decoration = BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFEE5A6), Color(0xFFFFC96B)],
+          ),
+          borderRadius: BorderRadius.circular(20.r),
+        );
+        titleColor = const Color(0xFF241A06);
+        descColor = const Color(0xFF6B5A33);
+        break;
+      case 2: // Master 大师版：深蓝金边
+        decoration = BoxDecoration(
+          color: const Color(0xFF17233A),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: const Color(0xFF8A6B2C), width: 1.2.w),
+        );
+        titleColor = Colors.white;
+        descColor = const Color(0xFF8A94A8);
+        break;
+      default: // 体验版：灰蓝
+        decoration = BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF9AA6B8), Color(0xFF6E7A8C)],
+          ),
+          borderRadius: BorderRadius.circular(20.r),
+        );
+        titleColor = const Color(0xFF141A26);
+        descColor = const Color(0xFF3C4658);
+        break;
+    }
+
+    return AnimatedScale(
+      scale: active ? 1.0 : 0.92,
+      duration: const Duration(milliseconds: 200),
+      child: GestureDetector(
+        onTap: () => _planController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOut,
+        ),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 6.w, vertical: 6.w),
+          padding: EdgeInsets.fromLTRB(20.w, 18.w, 20.w, 18.w),
+          decoration: decoration,
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    plan.name,
+                    style: TextStyle(
+                      fontSize: 19.sp,
+                      fontWeight: FontWeight.w800,
+                      color: titleColor,
+                    ),
+                  ),
+                  SizedBox(height: 8.w),
+                  Text(
+                    plan.desc,
+                    style: TextStyle(fontSize: 12.5.sp, color: descColor),
+                  ),
+                ],
+              ),
+              // 金色 V 徽章
+              Positioned(
+                right: index == 1 ? 24.w : 6.w,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _vBadge(size: index == 1 ? 62.w : 34.w),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // 档位颜色
-  Color _tierColor(String? tier) {
-    switch (tier) {
-      case 'pro':
-        return Constants.PRIMARY_COLOR;
-      case 'master':
-        return Constants.HIGHLIGHT_COLOR;
-      default:
-        return Constants.TEXT_SECONDARY_COLOR;
-    }
+  // 金色 V 徽章
+  Widget _vBadge({required double size}) {
+    return Transform.rotate(
+      angle: -0.18,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF6D488), Color(0xFFC9962A)],
+          ),
+          borderRadius: BorderRadius.circular(size * 0.24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 10.w,
+              offset: Offset(0, 4.w),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          'V',
+          style: TextStyle(
+            fontSize: size * 0.5,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF7A5A14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ===== 计费周期 =====
+  Widget _buildBillingCards() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Row(
+        children: List.generate(MineData.vipBillings.length, (index) {
+          final billing = MineData.vipBillings[index];
+          final selected = index == _billingIndex;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _billingIndex = index),
+              child: Container(
+                height: 92.w,
+                margin: EdgeInsets.only(left: index == 0 ? 0 : 14.w),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF1B2740), _cardNavy],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: selected ? _gold : Colors.white10,
+                    width: selected ? 1.4.w : 1.w,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      billing.name,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 10.w),
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFFFFE3A0), Color(0xFFE8A94B)],
+                      ).createShader(bounds),
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: billing.price,
+                              style: TextStyle(
+                                fontSize: 23.sp,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            TextSpan(
+                              text: billing.unit,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ===== 权益标题（两侧金线箭头）=====
+  Widget _buildSectionHeader() {
+    Widget sideLine(bool left) => Expanded(
+          child: Container(
+            height: 1.2.w,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: left
+                    ? [Colors.transparent, _gold.withValues(alpha: 0.7)]
+                    : [_gold.withValues(alpha: 0.7), Colors.transparent],
+              ),
+            ),
+          ),
+        );
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 32.w),
+      child: Row(
+        children: [
+          sideLine(true),
+          SizedBox(width: 10.w),
+          Icon(RemixIcons.arrow_right_fill, size: 12.w, color: _goldLight),
+          SizedBox(width: 10.w),
+          Text(
+            'Master 大师版权益',
+            style: TextStyle(
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w800,
+              color: _goldLight,
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Icon(RemixIcons.arrow_left_fill, size: 12.w, color: _goldLight),
+          SizedBox(width: 10.w),
+          sideLine(false),
+        ],
+      ),
+    );
+  }
+
+  // ===== 权益宫格 =====
+  Widget _buildBenefits() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: GridView.count(
+        crossAxisCount: 4,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        childAspectRatio: 0.82,
+        children: MineData.vipBenefits.map((benefit) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Container(
+                width: 56.w,
+                height: 56.w,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF1C2740), Color(0xFF0E1626)],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF263450)),
+                ),
+                child: Icon(RemixIcons.map_pin_2_fill,
+                    size: 24.w, color: _gold),
+              ),
+              SizedBox(height: 9.w),
+              Text(
+                benefit.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: const Color(0xFFE8ECF4),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // ===== 底部开通按钮 =====
+  Widget _buildSubscribeButton() {
+    final billing = MineData.vipBillings[_billingIndex];
+    return GestureDetector(
+      onTap: () => Fluttertoast.showToast(msg: '订阅成功，尽享权益（演示）'),
+      child: Container(
+        height: 54.w,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFE3A0), Color(0xFFF5C563)],
+          ),
+          borderRadius: BorderRadius.circular(27.r),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '¥${billing.price} 立即开通',
+          style: TextStyle(
+            fontSize: 17.sp,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF241A06),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 大 V 水印
+  Widget _watermarkV() {
+    return Transform.rotate(
+      angle: -0.42,
+      child: Container(
+        width: 150.w,
+        height: 150.w,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A2438), Color(0xFF0D1526)],
+          ),
+          borderRadius: BorderRadius.circular(30.r),
+          border: Border.all(color: const Color(0xFF223048), width: 2.w),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          'V',
+          style: TextStyle(
+            fontSize: 64.sp,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF182338),
+          ),
+        ),
+      ),
+    );
   }
 }

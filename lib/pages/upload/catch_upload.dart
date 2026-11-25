@@ -10,6 +10,7 @@ import 'package:FishMark/config/log_util.dart';
 import 'package:FishMark/http/api.dart';
 import 'package:FishMark/models/catch_record.dart';
 import 'package:FishMark/pages/report/report_preview.dart';
+import 'package:FishMark/utils/media_picker_util.dart';
 import 'package:FishMark/widgets/round_button.dart';
 
 /// @desc 鱼获记录上传页
@@ -27,7 +28,6 @@ class _CatchUploadPageState extends State<CatchUploadPage> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _weatherController = TextEditingController();
 
-  final ImagePicker _picker = ImagePicker();
   final List<XFile> _images = [];
   // 提交中
   bool _isSubmiting = false;
@@ -44,31 +44,22 @@ class _CatchUploadPageState extends State<CatchUploadPage> {
     super.dispose();
   }
 
-  // 拍照
+  // 拍照（含相机权限处理）
   Future<void> _takePhoto() async {
-    try {
-      final file = await _picker.pickImage(source: ImageSource.camera);
-      if (file != null && _images.length < Constants.SELECTED_MAX_COUNT) {
-        setState(() => _images.add(file));
-      }
-    } catch (e) {
-      LogUtil.e('拍照失败: $e');
+    final file = await MediaPickerUtil.takePhoto(context);
+    if (!mounted || file == null) return;
+    if (_images.length < Constants.SELECTED_MAX_COUNT) {
+      setState(() => _images.add(file));
     }
   }
 
-  // 相册选择
+  // 相册选择（含相册权限处理）
   Future<void> _pickImages() async {
-    try {
-      final files = await _picker.pickMultiImage();
-      if (files.isNotEmpty) {
-        setState(() {
-          final remain = Constants.SELECTED_MAX_COUNT - _images.length;
-          _images.addAll(files.take(remain));
-        });
-      }
-    } catch (e) {
-      LogUtil.e('相册选择失败: $e');
-    }
+    final remain = Constants.SELECTED_MAX_COUNT - _images.length;
+    if (remain <= 0) return;
+    final files = await MediaPickerUtil.pickImages(context, maxCount: remain);
+    if (!mounted || files.isEmpty) return;
+    setState(() => _images.addAll(files));
   }
 
   // 删除图片

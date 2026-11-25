@@ -6,6 +6,7 @@ import 'package:FishMark/config/constants.dart';
 import 'package:FishMark/config/log_util.dart';
 import 'package:FishMark/http/api.dart';
 import 'package:FishMark/models/catch_record.dart';
+import 'package:FishMark/utils/wechat_share_util.dart';
 import 'package:FishMark/widgets/net_image.dart';
 import 'package:FishMark/widgets/round_button.dart';
 
@@ -80,32 +81,32 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text('战报预览', style: TextStyle(fontSize: 34.sp)),
+        title: Text('战报预览', style: TextStyle(fontSize: 17.sp)),
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView(
-              padding: EdgeInsets.all(32.w),
+              padding: EdgeInsets.all(16.w),
               children: [
                 _buildReportCard(),
-                SizedBox(height: 32.w),
+                SizedBox(height: 16.w),
                 // 模板选择
                 if (_templates.isNotEmpty) ...[
                   Text(
                     '选择模板',
                     style: TextStyle(
-                      fontSize: 28.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 16.w),
+                  SizedBox(height: 8.w),
                   SizedBox(
-                    height: 160.w,
+                    height: 80.w,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _templates.length,
-                      separatorBuilder: (_, _) => SizedBox(width: 16.w),
+                      separatorBuilder: (_, _) => SizedBox(width: 8.w),
                       itemBuilder: (context, index) {
                         final template = _templates[index];
                         final selected = index == _selectedTemplate;
@@ -113,13 +114,13 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                           onTap: () =>
                               setState(() => _selectedTemplate = index),
                           child: Container(
-                            width: 200.w,
-                            padding: EdgeInsets.all(16.w),
+                            width: 100.w,
+                            padding: EdgeInsets.all(8.w),
                             decoration: BoxDecoration(
                               color: selected
                                   ? Constants.PRIMARY_COLOR
                                   : Colors.white,
-                              borderRadius: BorderRadius.circular(16.w),
+                              borderRadius: BorderRadius.circular(8.w),
                               border: Border.all(
                                 color: selected
                                     ? Constants.PRIMARY_COLOR
@@ -131,18 +132,18 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                               children: [
                                 Icon(
                                   Icons.style_outlined,
-                                  size: 48.w,
+                                  size: 24.w,
                                   color: selected
                                       ? Colors.white
                                       : Constants.PRIMARY_COLOR,
                                 ),
-                                SizedBox(height: 12.w),
+                                SizedBox(height: 6.w),
                                 Text(
                                   template['name'] ?? '模板${index + 1}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 24.sp,
+                                    fontSize: 12.sp,
                                     color: selected
                                         ? Colors.white
                                         : Constants.TEXT_DEFAULT_COLOR,
@@ -173,12 +174,12 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(32.w),
+        borderRadius: BorderRadius.circular(16.w),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 24.w,
-            offset: Offset(0, 8.w),
+            blurRadius: 12.w,
+            offset: Offset(0, 4.w),
           ),
         ],
       ),
@@ -190,24 +191,24 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
             children: [
               NetImage(
                 url: hasCover ? record.images!.first : null,
-                height: 400.w,
+                height: 200.w,
                 width: double.infinity,
                 borderRadius: 0,
               ),
               Positioned(
-                left: 24.w,
-                top: 24.w,
+                left: 12.w,
+                top: 12.w,
                 child: Container(
                   padding:
-                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.w),
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.w),
                   decoration: BoxDecoration(
                     color: Constants.HIGHLIGHT_COLOR,
-                    borderRadius: BorderRadius.circular(24.w),
+                    borderRadius: BorderRadius.circular(12.w),
                   ),
                   child: Text(
                     '路亚战报',
                     style: TextStyle(
-                      fontSize: 24.sp,
+                      fontSize: 12.sp,
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                     ),
@@ -217,7 +218,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
             ],
           ),
           Padding(
-            padding: EdgeInsets.all(32.w),
+            padding: EdgeInsets.all(16.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -225,12 +226,12 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                 Text(
                   record.fish?.name ?? '今日战果',
                   style: TextStyle(
-                    fontSize: 48.sp,
+                    fontSize: 24.sp,
                     fontWeight: FontWeight.w800,
                     color: Constants.TEXT_DEFAULT_COLOR,
                   ),
                 ),
-                SizedBox(height: 24.w),
+                SizedBox(height: 12.w),
                 // 数据行
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -244,25 +245,25 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                     _buildStatItem('钓点', record.spot?.name ?? '野钓'),
                   ],
                 ),
-                SizedBox(height: 24.w),
+                SizedBox(height: 12.w),
                 Divider(height: 1, color: Constants.LINE_COLOR),
-                SizedBox(height: 24.w),
+                SizedBox(height: 12.w),
                 // 天气与时间
                 Row(
                   children: [
                     Icon(Icons.cloud_outlined,
-                        size: 28.w, color: Constants.TEXT_LIGHT_COLOR),
-                    SizedBox(width: 8.w),
+                        size: 14.w, color: Constants.TEXT_LIGHT_COLOR),
+                    SizedBox(width: 4.w),
                     Text(
                       '${record.weather ?? '天气未知'} · ${record.caught_at ?? ''}',
                       style: TextStyle(
-                        fontSize: 24.sp,
+                        fontSize: 12.sp,
                         color: Constants.TEXT_SECONDARY_COLOR,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 16.w),
+                SizedBox(height: 8.w),
                 // 心得
                 if (record.notes != null && record.notes!.isNotEmpty)
                   Text(
@@ -270,22 +271,22 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 26.sp,
+                      fontSize: 13.sp,
                       color: Constants.TEXT_DEFAULT_COLOR,
                       height: 1.5,
                     ),
                   ),
-                SizedBox(height: 24.w),
+                SizedBox(height: 12.w),
                 // 底部品牌
                 Row(
                   children: [
                     Icon(Icons.phishing,
-                        size: 32.w, color: Constants.PRIMARY_COLOR),
-                    SizedBox(width: 8.w),
+                        size: 16.w, color: Constants.PRIMARY_COLOR),
+                    SizedBox(width: 4.w),
                     Text(
                       '${Constants.APP_NAME} · ${Constants.APP_SLOGAN}',
                       style: TextStyle(
-                        fontSize: 22.sp,
+                        fontSize: 11.sp,
                         color: Constants.TEXT_LIGHT_COLOR,
                       ),
                     ),
@@ -304,7 +305,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     return SafeArea(
       child: Container(
         color: Colors.white,
-        padding: EdgeInsets.fromLTRB(32.w, 16.w, 32.w, 16.w),
+        padding: EdgeInsets.fromLTRB(16.w, 8.w, 16.w, 8.w),
         child: Row(
           children: [
             Expanded(
@@ -316,7 +317,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                 textColor: Constants.PRIMARY_COLOR,
               ),
             ),
-            SizedBox(width: 24.w),
+            SizedBox(width: 12.w),
             Expanded(
               child: RoundButton(
                 text: '分享',
@@ -329,20 +330,23 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     );
   }
 
-  // 分享战报
+  // 分享战报：弹出微信分享面板（好友 / 朋友圈）
   Future<void> _handleShare() async {
     try {
       final result = await Api().post('report_share', data: {
         'rid': widget.record.rid,
       });
+      if (!mounted) return;
       if (result['success']) {
-        Fluttertoast.showToast(msg: '战报分享成功');
+        WechatShareUtil.show(context, title: '我的路亚战报 | 路记');
       } else {
         Fluttertoast.showToast(msg: result['status']['message']);
       }
     } catch (e) {
       LogUtil.e('战报分享失败: $e');
-      Fluttertoast.showToast(msg: '分享功能开发中');
+      if (!mounted) return;
+      // mock 环境：直接走微信分享面板
+      WechatShareUtil.show(context, title: '我的路亚战报 | 路记');
     }
   }
 
@@ -355,16 +359,16 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 32.sp,
+            fontSize: 16.sp,
             fontWeight: FontWeight.w700,
             color: Constants.PRIMARY_COLOR,
           ),
         ),
-        SizedBox(height: 8.w),
+        SizedBox(height: 4.w),
         Text(
           label,
           style: TextStyle(
-            fontSize: 22.sp,
+            fontSize: 11.sp,
             color: Constants.TEXT_LIGHT_COLOR,
           ),
         ),
@@ -376,7 +380,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
   Widget _verticalLine() {
     return Container(
       width: 1,
-      height: 48.w,
+      height: 24.w,
       color: Constants.LINE_COLOR,
     );
   }

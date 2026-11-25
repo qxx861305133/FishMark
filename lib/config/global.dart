@@ -25,6 +25,13 @@ class Global {
   // 可选主题列表
   static Map get themes => _themes;
 
+  // ===== 多语言（mock 级，仅内存）=====
+  /// 当前语言：'zh' 中文（简体） / 'en' English
+  static String lang = 'zh';
+
+  /// 极简文案翻译：按当前语言返回 zh / en 文案
+  static String t(String zh, String en) => lang == 'en' ? en : zh;
+
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 

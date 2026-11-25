@@ -19,13 +19,41 @@ class FishSpeciesListPage extends StatefulWidget {
 
 class _FishSpeciesListPageState extends State<FishSpeciesListPage> {
   final List<FishSpecies> _species = [];
+  final ScrollController _gridCtrl = ScrollController();
   bool _loading = true;
+  bool _loadingMore = false;
+  int _loadMoreCount = 0;
   int _unlockedCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _gridCtrl.addListener(_onGridScroll);
     _loadSpecies();
+  }
+
+  @override
+  void dispose() {
+    _gridCtrl.dispose();
+    super.dispose();
+  }
+
+  // 上拉加载：网格滚动到底时追加 mock 数据
+  void _onGridScroll() {
+    if (!_gridCtrl.hasClients || _loadingMore || _loadMoreCount >= 3) return;
+    final pos = _gridCtrl.position;
+    if (pos.pixels >= pos.maxScrollExtent - 80) _loadMore();
+  }
+
+  Future<void> _loadMore() async {
+    setState(() => _loadingMore = true);
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted || _species.isEmpty) return;
+    setState(() {
+      _species.addAll(_species.take(6).toList());
+      _loadMoreCount++;
+      _loadingMore = false;
+    });
   }
 
   Future<void> _loadSpecies() async {
@@ -34,6 +62,8 @@ class _FishSpeciesListPageState extends State<FishSpeciesListPage> {
       if (!mounted) return;
       if (result['success'] && result['data'] is List) {
         int unlocked = 0;
+        _species.clear();
+        _loadMoreCount = 0;
         for (final item in result['data']) {
           final species = FishSpecies.fromJson(
             Map<String, dynamic>.from(item),
@@ -62,7 +92,7 @@ class _FishSpeciesListPageState extends State<FishSpeciesListPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text('鱼种图鉴', style: TextStyle(fontSize: 34.sp)),
+        title: Text('鱼种图鉴', style: TextStyle(fontSize: 17.sp)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -74,32 +104,46 @@ class _FishSpeciesListPageState extends State<FishSpeciesListPage> {
                     Container(
                       width: double.infinity,
                       color: Colors.white,
-                      padding: EdgeInsets.fromLTRB(32.w, 0, 32.w, 24.w),
+                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.w),
                       child: Text(
                         '已解锁 $_unlockedCount / ${_species.length} 种',
                         style: TextStyle(
-                          fontSize: 26.sp,
+                          fontSize: 13.sp,
                           color: Constants.TEXT_SECONDARY_COLOR,
                         ),
                       ),
                     ),
-                    // 图鉴网格
+                    // 图鉴网格（下拉刷新 + 上拉加载更多）
                     Expanded(
                       child: RefreshIndicator(
                         onRefresh: _loadSpecies,
                         child: GridView.builder(
+                          controller: _gridCtrl,
                           padding: EdgeInsets.fromLTRB(
-                              32.w, 24.w, 32.w, 160.w),
+                              16.w, 12.w, 16.w, 80.w),
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
-                            mainAxisSpacing: 24.w,
-                            crossAxisSpacing: 24.w,
+                            mainAxisSpacing: 12.w,
+                            crossAxisSpacing: 12.w,
                             childAspectRatio: 0.72,
                           ),
-                          itemCount: _species.length,
-                          itemBuilder: (context, index) =>
-                              _buildSpeciesCard(_species[index]),
+                          itemCount: _species.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == _species.length) {
+                              return _loadingMore
+                                  ? const Center(
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      ),
+                                    )
+                                  : const SizedBox.shrink();
+                            }
+                            return _buildSpeciesCard(_species[index]);
+                          },
                         ),
                       ),
                     ),
@@ -120,10 +164,10 @@ class _FishSpeciesListPageState extends State<FishSpeciesListPage> {
         );
       },
       child: Container(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24.w),
+          borderRadius: BorderRadius.circular(12.w),
         ),
         child: Column(
           children: [
@@ -133,31 +177,31 @@ class _FishSpeciesListPageState extends State<FishSpeciesListPage> {
                 children: [
                   NetImage(
                     url: unlocked ? species.cover : null,
-                    borderRadius: 16.w,
+                    borderRadius: 8.w,
                   ),
                   // 未解锁遮罩
                   if (!unlocked)
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(16.w),
+                        borderRadius: BorderRadius.circular(8.w),
                       ),
                       child: Icon(
                         Icons.help_outline,
-                        size: 72.w,
+                        size: 36.w,
                         color: Colors.black26,
                       ),
                     ),
                 ],
               ),
             ),
-            SizedBox(height: 12.w),
+            SizedBox(height: 6.w),
             Text(
               unlocked ? (species.name ?? '') : '???',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 26.sp,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
                 color: unlocked
                     ? Constants.TEXT_DEFAULT_COLOR
@@ -168,7 +212,7 @@ class _FishSpeciesListPageState extends State<FishSpeciesListPage> {
               Text(
                 _difficultyLabel(species.difficulty),
                 style: TextStyle(
-                  fontSize: 22.sp,
+                  fontSize: 11.sp,
                   color: Constants.TEXT_LIGHT_COLOR,
                 ),
               ),

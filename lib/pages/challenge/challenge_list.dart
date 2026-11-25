@@ -73,7 +73,7 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text('挑战', style: TextStyle(fontSize: 34.sp)),
+        title: Text('挑战', style: TextStyle(fontSize: 17.sp)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -82,22 +82,22 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                 // 类型筛选
                 Container(
                   color: Colors.white,
-                  padding: EdgeInsets.fromLTRB(32.w, 0, 32.w, 24.w),
+                  padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.w),
                   child: SizedBox(
-                    height: 72.w,
+                    height: 36.w,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: _typeMap.entries.map((entry) {
                         final selected = _type == entry.key;
                         return Padding(
-                          padding: EdgeInsets.only(right: 16.w),
+                          padding: EdgeInsets.only(right: 8.w),
                           child: ChoiceChip(
                             label: Text(entry.value),
                             selected: selected,
                             selectedColor: Constants.PRIMARY_COLOR,
                             backgroundColor: Constants.BG_COLOR,
                             labelStyle: TextStyle(
-                              fontSize: 26.sp,
+                              fontSize: 13.sp,
                               color: selected
                                   ? Colors.white
                                   : Constants.TEXT_SECONDARY_COLOR,
@@ -119,7 +119,7 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                           onRefresh: _loadChallenges,
                           child: ListView.builder(
                             padding: EdgeInsets.fromLTRB(
-                                32.w, 24.w, 32.w, 160.w),
+                                16.w, 12.w, 16.w, 80.w),
                             itemCount: _filtered.length,
                             itemBuilder: (context, index) =>
                                 _buildChallengeCard(_filtered[index]),
@@ -145,11 +145,11 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
         );
       },
       child: Container(
-        margin: EdgeInsets.only(bottom: 24.w),
-        padding: EdgeInsets.all(24.w),
+        margin: EdgeInsets.only(bottom: 12.w),
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24.w),
+          borderRadius: BorderRadius.circular(12.w),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,11 +158,11 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
               children: [
                 NetImage(
                   url: challenge.cover,
-                  width: 96.w,
-                  height: 96.w,
-                  borderRadius: 16.w,
+                  width: 48.w,
+                  height: 48.w,
+                  borderRadius: 8.w,
                 ),
-                SizedBox(width: 24.w),
+                SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,17 +172,17 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 30.sp,
+                          fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: 8.w),
+                      SizedBox(height: 4.w),
                       Text(
                         challenge.target ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 24.sp,
+                          fontSize: 12.sp,
                           color: Constants.TEXT_SECONDARY_COLOR,
                         ),
                       ),
@@ -192,16 +192,16 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                 _buildStatusTag(challenge.status),
               ],
             ),
-            SizedBox(height: 20.w),
+            SizedBox(height: 10.w),
             // 进度条
             Row(
               children: [
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.w),
+                    borderRadius: BorderRadius.circular(4.w),
                     child: LinearProgressIndicator(
                       value: ratio,
-                      minHeight: 12.w,
+                      minHeight: 6.w,
                       backgroundColor: Constants.BG_COLOR,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         ratio >= 1
@@ -211,27 +211,27 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 16.w),
+                SizedBox(width: 8.w),
                 Text(
                   '$progress/$target',
                   style: TextStyle(
-                    fontSize: 24.sp,
+                    fontSize: 12.sp,
                     color: Constants.TEXT_SECONDARY_COLOR,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 16.w),
+            SizedBox(height: 8.w),
             // 奖励
             Row(
               children: [
                 Icon(Icons.military_tech,
-                    size: 28.w, color: Constants.HIGHLIGHT_COLOR),
-                SizedBox(width: 4.w),
+                    size: 14.w, color: Constants.HIGHLIGHT_COLOR),
+                SizedBox(width: 2.w),
                 Text(
                   '${challenge.reward?.name ?? '神秘勋章'} · +${challenge.points ?? 0}积分',
                   style: TextStyle(
-                    fontSize: 24.sp,
+                    fontSize: 12.sp,
                     color: Constants.HIGHLIGHT_COLOR,
                     fontWeight: FontWeight.w500,
                   ),
@@ -241,7 +241,7 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                   Text(
                     '截止 ${challenge.end_at}',
                     style: TextStyle(
-                      fontSize: 22.sp,
+                      fontSize: 11.sp,
                       color: Constants.TEXT_LIGHT_COLOR,
                     ),
                   ),
@@ -275,15 +275,15 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
         color = Constants.TEXT_LIGHT_COLOR;
     }
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.w),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.w),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8.w),
+        borderRadius: BorderRadius.circular(4.w),
       ),
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 22.sp,
+          fontSize: 11.sp,
           color: color,
           fontWeight: FontWeight.w600,
         ),

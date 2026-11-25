@@ -1,21 +1,42 @@
-import 'package:carousel_slider/carousel_slider.dart';
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:remixicon/remixicon.dart';
 
 import 'package:FishMark/config/constants.dart';
-import 'package:FishMark/config/log_util.dart';
-import 'package:FishMark/http/api.dart';
-import 'package:FishMark/models/challenge.dart';
-import 'package:FishMark/models/feed.dart';
-import 'package:FishMark/pages/challenge/challenge_detail.dart';
-import 'package:FishMark/pages/challenge/challenge_list.dart';
-import 'package:FishMark/pages/upload/catch_upload.dart';
-import 'package:FishMark/widgets/empty_widget.dart';
+import 'package:FishMark/mock/design_data.dart';
+import 'package:FishMark/pages/medal/medal_list_page.dart';
+import 'package:FishMark/pages/medal/medal_achieved_sheet.dart';
+import 'package:FishMark/pages/notification/notification_page.dart';
+import 'package:FishMark/utils/wechat_share_util.dart';
 import 'package:FishMark/widgets/net_image.dart';
-import 'package:FishMark/widgets/section_header.dart';
+import 'package:FishMark/widgets/ui_kit.dart';
 
-/// @desc 首页Tab：Banner轮播 + 挑战入口 + 鱼获动态
+/// @desc 1.1.1 首页
+
+/// 内容面板底色（设计稿采样 #F5F7FB）
+const Color _kPanelBg = Color(0xFFF5F7FB);
+
+/// banner 照片总高度（底部一段被白面板遮住）
+const double _kBannerH = 400;
+
+/// 白面板上移遮挡 banner 的高度
+const double _kPanelOverlap = 40;
+
+/// 未读红点角标颜色
+const Color _kBadgeRed = Color(0xFFFF5E59);
+
+/// 挑战卡片渐变顶色（按勋章样式，设计稿采样）
+const Map<MedalStyle, Color> _kChallengeTints = {
+  MedalStyle.bronze: Color(0xFFFFF0E9),
+  MedalStyle.silver: Color(0xFFF1F3F7),
+  MedalStyle.gold: Color(0xFFFFFBE2),
+  MedalStyle.blue: Color(0xFFF0F5FF),
+};
+
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 
@@ -24,256 +45,669 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  final List<Map<String, dynamic>> _banners = [];
-  final List<Challenge> _challenges = [];
-  final List<Feed> _feeds = [];
-  bool _loading = true;
+  final ScrollController _scrollController = ScrollController();
+  late List<MockFeed> _feeds;
+  int _feedPage = 1;
+  bool _loadingMore = false;
+  bool _headerGlass = false;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _feeds = _generateFeeds(1);
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _loadData() async {
-    try {
-      final results = await Future.wait([
-        Api().get('banners'),
-        Api().get('challenges', queryParameters: {'page_size': 3}),
-        Api().get('home_feeds'),
-      ]);
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        // Banner
-        final bannerData = results[0]['data'];
-        if (bannerData is List) {
-          _banners.clear();
-          for (final item in bannerData) {
-            _banners.add(Map<String, dynamic>.from(item));
-          }
-        }
-        // 挑战
-        final challengeData = results[1]['data'];
-        if (challengeData is List) {
-          _challenges.clear();
-          for (final item in challengeData) {
-            _challenges.add(Challenge.fromJson(Map<String, dynamic>.from(item)));
-          }
-        }
-        // 鱼获动态
-        final feedData = results[2]['data'];
-        if (feedData is List) {
-          _feeds.clear();
-          for (final item in feedData) {
-            _feeds.add(Feed.fromJson(Map<String, dynamic>.from(item)));
-          }
-        }
-      });
-    } catch (e) {
-      LogUtil.e('首页数据加载失败: $e');
-      if (!mounted) return;
-      setState(() => _loading = false);
-    }
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// 未读官方消息数
+  int get _unreadCount =>
+      DesignData.officialMessages.where((m) => m.unread).length;
+
+  /// 复制 mock 渔获生成分页数据
+  List<MockFeed> _generateFeeds(int page) {
+    return [
+      for (final f in DesignData.feeds)
+        MockFeed(
+          userName: f.userName,
+          avatar: f.avatar,
+          date: f.date,
+          image: page > 1
+              ? f.image.replaceFirst('seed/luji-', 'seed/luji-p$page-')
+              : f.image,
+          fishName: f.fishName,
+          weight: f.weight,
+          length: f.length,
+          location: f.location,
+          likes: f.likes,
+          comments: f.comments,
+          liked: f.liked,
+        ),
+    ];
+  }
+
+  /// 下拉刷新
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+    setState(() {
+      _feedPage = 1;
+      _feeds = _generateFeeds(1);
+    });
+  }
+
+  /// 上拉加载更多
+  Future<void> _loadMore() async {
+    if (_loadingMore) return;
+    setState(() => _loadingMore = true);
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    setState(() {
+      _feedPage += 1;
+      _feeds.addAll(_generateFeeds(_feedPage));
+      _loadingMore = false;
+    });
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    // 上拉加载
+    if (!_loadingMore && pos.maxScrollExtent - pos.pixels < 300) _loadMore();
+    // 滚过阈值后头部切换毛玻璃
+    final glass = pos.pixels > 200.w;
+    if (glass != _headerGlass) setState(() => _headerGlass = glass);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Constants.BG_COLOR,
-      appBar: AppBar(
-        backgroundColor: Constants.PRIMARY_COLOR,
-        elevation: 0,
-        centerTitle: false,
-        title: Text(
-          Constants.APP_NAME,
-          style: TextStyle(
-            fontSize: 36.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 32.w),
-            child: Icon(Icons.phishing, size: 44.w, color: Colors.white),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: EdgeInsets.only(bottom: 160.w),
-                children: [
-                  _buildBanner(),
-                  if (_challenges.isNotEmpty) ...[
-                    SectionHeader(
-                      title: '进行中的挑战',
-                      actionText: '全部',
-                      onAction: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const ChallengeListPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildChallenges(),
-                  ],
-                  SectionHeader(title: '鱼获动态'),
-                  _buildFeeds(),
-                ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: _headerGlass
+          ? SystemUiOverlayStyle.dark
+          : SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Stack(
+          children: [
+            // 滚动层：banner 照片跟随内容滚动，白面板圆角上移遮住 banner 底部
+            Positioned.fill(
+              child: RefreshIndicator(
+                color: Constants.INK,
+                onRefresh: _onRefresh,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [SliverToBoxAdapter(child: _buildScrollBody())],
+                ),
               ),
+            ),
+            // 固定层：头像信息行（不随滚动）
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _buildFixedHeaderBar(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // Banner轮播
-  Widget _buildBanner() {
-    if (_banners.isEmpty) {
-      return SizedBox(height: 16.w);
-    }
-    return Container(
-      margin: EdgeInsets.only(top: 24.w),
-      child: CarouselSlider(
-        options: CarouselOptions(
-          height: 280.w,
-          viewportFraction: 0.92,
-          autoPlay: _banners.length > 1,
-          autoPlayInterval: const Duration(seconds: 4),
-        ),
-        items: _banners.map((banner) {
-          return GestureDetector(
-            onTap: () => _handleBannerLink(banner['link']),
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 8.w),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  NetImage(
-                    url: banner['image'],
-                    borderRadius: 24.w,
+  /// 滚动主体：banner 照片 + 白色圆角内容面板（面板叠在照片底部之上）
+  Widget _buildScrollBody() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // banner 背景照片（定高，随内容滚动）
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SizedBox(
+            height: _kBannerH.w,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                NetImage(
+                  url: 'https://picsum.photos/seed/luji-banner/870/540',
+                  fit: BoxFit.cover,
+                ),
+                // 暗色遮罩
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.45),
+                        Colors.black.withValues(alpha: 0.15),
+                      ],
+                    ),
                   ),
-                  Positioned(
-                    left: 24.w,
-                    bottom: 24.w,
-                    child: Text(
-                      banner['title'] ?? '',
+                ),
+                Center(
+                  child: Text(
+                    'Banner 临时占位',
+                    style: TextStyle(fontSize: 16.sp, color: Colors.white70),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // 白色圆角内容面板：上移遮住 banner 底部一段
+        Padding(
+          padding: EdgeInsets.only(top: (_kBannerH - _kPanelOverlap).w),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _kPanelBg,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 24.w),
+                SectionRow(title: '我的挑战', onViewAll: _pushMedalList),
+                SizedBox(height: 16.w),
+                _buildChallengeCards(),
+                SizedBox(height: 24.w),
+                SectionRow(
+                  title: '渔获动态',
+                  onViewAll: () {
+                    Fluttertoast.showToast(msg: '演示数据，敬请期待');
+                  },
+                ),
+                SizedBox(height: 16.w),
+                ..._feeds.map((feed) => FeedCard(feed: feed)),
+                if (_loadingMore)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.w),
+                    child: Center(
+                      child: SizedBox(
+                        width: 22.w,
+                        height: 22.w,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Constants.GRAY,
+                        ),
+                      ),
+                    ),
+                  ),
+                SizedBox(height: 24.w),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 固定在顶部的头像信息行（含消息角标铃铛）
+  /// 滚过阈值后切换为白色毛玻璃背景 + 深色文字
+  Widget _buildFixedHeaderBar() {
+    final topPadding = MediaQuery.of(context).padding.top;
+    final glass = _headerGlass;
+    // 前景色：正常白色 / 毛玻璃深色
+    final titleColor = glass ? Constants.INK : Colors.white;
+    final subColor = glass ? Constants.GRAY_LIGHT : Colors.white70;
+    final bar = Container(
+      padding: EdgeInsets.fromLTRB(
+        pagePadding,
+        topPadding + 12.w,
+        pagePadding,
+        12.w,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(1.5.w),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+            child: NetImage(
+              url: DesignData.user.avatar,
+              width: 41.w,
+              height: 41.w,
+              borderRadius: 20.5.w,
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      DesignData.user.name,
                       style: TextStyle(
-                        fontSize: 30.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        shadows: const [
-                          Shadow(color: Colors.black45, blurRadius: 8),
-                        ],
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: titleColor,
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    _levelBadge(),
+                    SizedBox(width: 4.w),
+                    _badge(),
+                  ],
+                ),
+                SizedBox(height: 4.w),
+                Row(
+                  children: [
+                    Icon(RemixIcons.map_pin_line, size: 12.w, color: subColor),
+                    SizedBox(width: 2.w),
+                    Text(
+                      DesignData.user.location,
+                      style: TextStyle(fontSize: 12.sp, color: subColor),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          _buildBell(glass: glass),
+        ],
+      ),
+    );
+    // 背景：普通黑色渐变 / 毛玻璃
+    if (!glass) {
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black.withValues(alpha: 0.35), Colors.transparent],
+          ),
+        ),
+        child: bar,
+      );
+    }
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.78),
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.black.withValues(alpha: 0.06),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: bar,
+        ),
+      ),
+    );
+  }
+
+  /// 铃铛 + 未读消息数量角标
+  Widget _buildBell({bool glass = false}) {
+    return GestureDetector(
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const NotificationPage())),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: EdgeInsets.all(4.w),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(
+              RemixIcons.notification_3_line,
+              size: 22.w,
+              color: glass ? Constants.INK : Colors.white,
+            ),
+            if (_unreadCount > 0)
+              Positioned(
+                top: -5.w,
+                right: -8.w,
+                child: Container(
+                  height: 15.w,
+                  constraints: BoxConstraints(minWidth: 15.w),
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _kBadgeRed,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(color: Colors.white, width: 1.w),
+                  ),
+                  child: Text(
+                    _unreadCount > 99 ? '99+' : '$_unreadCount',
+                    style: TextStyle(
+                      fontSize: 9.sp,
+                      height: 1,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _levelBadge() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.w),
+      decoration: BoxDecoration(
+        color: Constants.LIME,
+        borderRadius: BorderRadius.circular(4.r),
+      ),
+      child: Text(
+        DesignData.user.level,
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w700,
+          color: Constants.INK,
+        ),
+      ),
+    );
+  }
+
+  Widget _badge() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1D92F6),
+        borderRadius: BorderRadius.circular(4.r),
+      ),
+      child: Text(
+        DesignData.user.badge,
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  /// 我的挑战横向卡片（徽章悬浮超出卡片顶部）
+  Widget _buildChallengeCards() {
+    return SizedBox(
+      height: 166.w,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        itemCount: DesignData.challenges.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              right: index == DesignData.challenges.length - 1 ? 0 : 12.w,
+            ),
+            child: _ChallengeCard(
+              challenge: DesignData.challenges[index],
+              onClaim: _showAchieved,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _pushMedalList() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MedalListPage()));
+  }
+
+  void _showAchieved() {
+    MedalAchievedSheet.show(context);
+  }
+}
+
+/// 我的挑战卡片：渐变底色 + 徽章悬浮超出卡片顶部
+class _ChallengeCard extends StatelessWidget {
+  final MockChallenge challenge;
+  final VoidCallback onClaim;
+
+  const _ChallengeCard({required this.challenge, required this.onClaim});
+
+  @override
+  Widget build(BuildContext context) {
+    final claimable = challenge.status == ChallengeStatus.claimable;
+    final tint = _kChallengeTints[challenge.style]!;
+    return SizedBox(
+      width: 122.w,
+      height: 170.w, // 固定高度：16 徽章悬浮区 + 154 卡体，避免内容溢出
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // 卡片主体（顶部留出徽章悬浮空间）
+          Positioned(
+            top: 16.w,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(12.w, 48.w, 12.w, 16.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0, 0.45],
+                  colors: [tint, Colors.white],
+                ),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    challenge.title,
+                    style: TextStyle(fontSize: 12.sp, color: Constants.INK),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 6.w),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${challenge.current} ',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Constants.INK,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '/${challenge.total}',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Constants.GRAY_LIGHT,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10.w),
+                  GestureDetector(
+                    onTap: claimable ? onClaim : null,
+                    child: Container(
+                      width: double.infinity,
+                      height: 28.w,
+                      decoration: BoxDecoration(
+                        color: claimable ? Constants.LIME : Constants.INPUT_BG,
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '领取徽章',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: claimable ? Constants.INK : Constants.GRAY,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        }).toList(),
+          ),
+          // 徽章：悬浮在卡片顶部之上
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Center(child: HexMedal(style: challenge.style, size: 56)),
+          ),
+        ],
       ),
     );
   }
+}
 
-  // Banner跳转（按link标识直接push目标页）
-  void _handleBannerLink(dynamic link) {
-    final target = link?.toString() ?? '';
-    switch (target) {
-      case 'challenge_list':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ChallengeListPage()),
-        );
-        break;
-      case 'catch_upload':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CatchUploadPage()),
-        );
-        break;
-      default:
-        Fluttertoast.showToast(msg: '活动页面敬请期待');
-    }
-  }
+/// 渔获动态卡片
+class FeedCard extends StatefulWidget {
+  final MockFeed feed;
 
-  // 挑战横滑卡片
-  Widget _buildChallenges() {
-    return SizedBox(
-      height: 220.w,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 32.w),
-        itemCount: _challenges.length,
-        separatorBuilder: (_, _) => SizedBox(width: 24.w),
-        itemBuilder: (context, index) {
-          final challenge = _challenges[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ChallengeDetailPage(rid: challenge.rid),
+  const FeedCard({super.key, required this.feed});
+
+  @override
+  State<FeedCard> createState() => _FeedCardState();
+}
+
+class _FeedCardState extends State<FeedCard> {
+  @override
+  Widget build(BuildContext context) {
+    final feed = widget.feed;
+    return Container(
+      margin: EdgeInsets.fromLTRB(pagePadding, 0, pagePadding, 16.w),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Constants.BORDER),
+      ),
+      child: Column(
+        children: [
+          // 头部：用户 + 日期
+          Row(
+            children: [
+              Container(
+                width: 36.w,
+                height: 36.w,
+                child: NetImage(
+                  url: feed.avatar,
+                  width: 36.w,
+                  height: 36.w,
+                  borderRadius: 18.w,
                 ),
-              );
-            },
-            child: Container(
-              width: 480.w,
-              padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24.w),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 100.w,
-                    height: 100.w,
-                    decoration: BoxDecoration(
-                      color: Constants.HIGHLIGHT_COLOR.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20.w),
-                    ),
-                    child: Icon(Icons.emoji_events_outlined,
-                        size: 56.w, color: Constants.HIGHLIGHT_COLOR),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  feed.userName,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Constants.INK,
                   ),
-                  SizedBox(width: 24.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                ),
+              ),
+              Text(
+                feed.date,
+                style: TextStyle(fontSize: 12.sp, color: Constants.GRAY_LIGHT),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.w),
+          // 照片
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12.r),
+            child: SizedBox(
+              width: double.infinity,
+              height: 190.w,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  NetImage(url: feed.image, fit: BoxFit.cover),
+                  // 底部渐变
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0.4, 1],
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.55),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // 鱼名 / 地点 / 重量长度
+                  Positioned(
+                    left: 12.w,
+                    right: 12.w,
+                    bottom: 10.w,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          challenge.title ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 30.sp,
-                            fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                feed.fishName,
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 4.w),
+                              Row(
+                                children: [
+                                  Icon(
+                                    RemixIcons.map_pin_line,
+                                    size: 11.w,
+                                    color: Colors.white70,
+                                  ),
+                                  SizedBox(width: 2.w),
+                                  Text(
+                                    feed.location,
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 8.w),
-                        Text(
-                          challenge.target ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            color: Constants.TEXT_SECONDARY_COLOR,
-                          ),
-                        ),
-                        SizedBox(height: 12.w),
-                        Row(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Icon(Icons.military_tech,
-                                size: 28.w, color: Constants.HIGHLIGHT_COLOR),
-                            SizedBox(width: 4.w),
                             Text(
-                              '+${challenge.points ?? 0} 积分',
+                              feed.weight,
                               style: TextStyle(
-                                fontSize: 24.sp,
-                                color: Constants.HIGHLIGHT_COLOR,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w800,
+                                color: Constants.LIME,
+                              ),
+                            ),
+                            SizedBox(height: 2.w),
+                            Text(
+                              feed.length,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.white,
                               ),
                             ),
                           ],
@@ -284,156 +718,94 @@ class _HomeTabState extends State<HomeTab> {
                 ],
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  // 鱼获动态列表
-  Widget _buildFeeds() {
-    if (_feeds.isEmpty) {
-      return SizedBox(
-        height: 320.w,
-        child: const EmptyWidget(text: '还没有动态，发一条你的鱼获吧'),
-      );
-    }
-    return Column(
-      children: _feeds.map((feed) => _buildFeedItem(feed)).toList(),
-    );
-  }
-
-  // 单条动态卡片
-  Widget _buildFeedItem(Feed feed) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(32.w, 0, 32.w, 24.w),
-      padding: EdgeInsets.all(24.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.w),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 发布者信息
-          Row(
-            children: [
-              NetImage(
-                url: feed.user?.avatar,
-                width: 72.w,
-                height: 72.w,
-                borderRadius: 36.w,
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      feed.user?.nickname ?? '路亚钓友',
-                      style: TextStyle(
-                        fontSize: 28.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (feed.created_at != null)
-                      Text(
-                        feed.created_at!,
-                        style: TextStyle(
-                          fontSize: 22.sp,
-                          color: Constants.TEXT_LIGHT_COLOR,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
           ),
-          SizedBox(height: 16.w),
-          // 文案
-          if (feed.content != null && feed.content!.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(bottom: 16.w),
-              child: Text(
-                feed.content!,
-                style: TextStyle(
-                  fontSize: 28.sp,
-                  color: Constants.TEXT_DEFAULT_COLOR,
-                ),
-              ),
-            ),
-          // 图片
-          if (feed.images != null && feed.images!.isNotEmpty)
-            _buildFeedImages(feed.images!),
-          // 鱼获信息条
-          if (feed.catch_record != null)
-            Container(
-              margin: EdgeInsets.only(top: 16.w),
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: Constants.BG_COLOR,
-                borderRadius: BorderRadius.circular(16.w),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.set_meal, size: 32.w, color: Constants.PRIMARY_COLOR),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      '${feed.catch_record!.fish?.name ?? '未知鱼种'}'
-                      '${feed.catch_record!.weight != null ? ' · ${feed.catch_record!.weight}kg' : ''}',
-                      style: TextStyle(
-                        fontSize: 24.sp,
-                        color: Constants.PRIMARY_COLOR,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          SizedBox(height: 16.w),
-          // 点赞/评论
+          SizedBox(height: 10.w),
+          // 操作行：点赞 / 评论 / 分享
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               GestureDetector(
-                onTap: () => _handleLike(feed),
-                child: Row(
-                  children: [
-                    Icon(
-                      feed.liked == true
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      size: 36.w,
-                      color: feed.liked == true
-                          ? Constants.ERROR_COLOR
-                          : Constants.TEXT_SECONDARY_COLOR,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      '${feed.likes ?? 0}',
-                      style: TextStyle(
-                        fontSize: 24.sp,
-                        color: Constants.TEXT_SECONDARY_COLOR,
+                onTap: () => setState(() {
+                  feed.liked = !feed.liked;
+                  feed.likes += feed.liked ? 1 : -1;
+                }),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w),
+                  child: Row(
+                    children: [
+                      Icon(
+                        feed.liked
+                            ? RemixIcons.heart_3_fill
+                            : RemixIcons.heart_3_line,
+                        size: 18.w,
+                        color: feed.liked ? _kBadgeRed : Constants.GRAY,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 4.w),
+                      Text(
+                        _formatCount(feed.likes),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: feed.liked ? _kBadgeRed : Constants.GRAY,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              SizedBox(width: 48.w),
-              Row(
-                children: [
-                  Icon(Icons.chat_bubble_outline,
-                      size: 36.w, color: Constants.TEXT_SECONDARY_COLOR),
-                  SizedBox(width: 8.w),
-                  Text(
-                    '${feed.comments_count ?? 0}',
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      color: Constants.TEXT_SECONDARY_COLOR,
-                    ),
+              SizedBox(width: 12.w),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Fluttertoast.showToast(msg: '演示环境暂不支持'),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w),
+                  child: Row(
+                    children: [
+                      Icon(
+                        RemixIcons.chat_3_line,
+                        size: 18.w,
+                        color: Constants.GRAY,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '${feed.comments}',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Constants.GRAY,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+              SizedBox(width: 12.w),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => WechatShareUtil.show(
+                  context,
+                  title: '${feed.fishName} | 路记',
+                  desc: '${feed.userName} 在${feed.location}钓获${feed.fishName}',
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w),
+                  child: Row(
+                    children: [
+                      Icon(
+                        RemixIcons.share_forward_line,
+                        size: 18.w,
+                        color: Constants.GRAY,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '分享',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Constants.GRAY,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -442,43 +814,14 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  // 动态九宫格图片
-  Widget _buildFeedImages(List<String> images) {
-    final showCount = images.length > 3 ? 3 : images.length;
-    return Row(
-      children: List.generate(showCount, (index) {
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.only(right: index == showCount - 1 ? 0 : 12.w),
-            child: NetImage(
-              url: images[index],
-              height: 200.w,
-              borderRadius: 16.w,
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
-  // 点赞
-  Future<void> _handleLike(Feed feed) async {
-    if (feed.rid == null) return;
-    try {
-      final result = await Api().post('feed_like', data: {'rid': feed.rid});
-      if (result['success']) {
-        if (!mounted) return;
-        setState(() {
-          feed.liked = !(feed.liked ?? false);
-          feed.likes = (feed.likes ?? 0) + (feed.liked == true ? 1 : -1);
-        });
-      } else {
-        Fluttertoast.showToast(msg: result['status']['message']);
-      }
-    } catch (e) {
-      LogUtil.e('点赞失败: $e');
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
+  String _formatCount(int n) {
+    final s = n.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      final rest = s.length - i;
+      buf.write(s[i]);
+      if (rest > 1 && rest % 3 == 1) buf.write(',');
     }
+    return buf.toString();
   }
 }
-

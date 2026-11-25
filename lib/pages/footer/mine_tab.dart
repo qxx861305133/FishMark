@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:remixicon/remixicon.dart';
 
 import 'package:FishMark/config/constants.dart';
-import 'package:FishMark/config/log_util.dart';
-import 'package:FishMark/http/api.dart';
-import 'package:FishMark/models/user.dart';
-import 'package:FishMark/pages/auth/login.dart';
-import 'package:FishMark/pages/challenge/challenge_list.dart';
+import 'package:FishMark/config/global.dart';
+import 'package:FishMark/mock/design_data.dart';
+import 'package:FishMark/mock/mine_data.dart';
 import 'package:FishMark/pages/explore/fish_species_list.dart';
-import 'package:FishMark/pages/gear/gear_library.dart';
-import 'package:FishMark/pages/medal/medal_wall.dart';
-import 'package:FishMark/pages/mine/digital_resume.dart';
+import 'package:FishMark/pages/medal/medal_list_page.dart';
+import 'package:FishMark/pages/mine/more_settings_page.dart';
 import 'package:FishMark/pages/subscription/subscription.dart';
-import 'package:FishMark/provider/profile.dart';
 import 'package:FishMark/widgets/net_image.dart';
+import 'package:FishMark/widgets/ui_kit.dart';
 
-/// @desc 我的Tab：用户头卡 + 数据总览 + 功能入口
+/// @desc 5.1 我的
 class MineTab extends StatefulWidget {
   const MineTab({super.key});
 
@@ -25,284 +23,693 @@ class MineTab extends StatefulWidget {
 }
 
 class _MineTabState extends State<MineTab> {
-  // 图鉴入口颜色
-  static const Color _successIconColor = Color.fromRGBO(22, 163, 74, 1.0);
-
-  // 数据总览
-  Map<String, dynamic> _overview = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _loadOverview();
-  }
-
-  Future<void> _loadOverview() async {
-    final isLogin = Provider.of<UserNotifier>(context, listen: false).isLogin;
-    if (!isLogin) return;
-    try {
-      final result = await Api().get('my_overview');
-      if (!mounted) return;
-      if (result['success'] && result['data'] is Map) {
-        setState(() {
-          _overview = Map<String, dynamic>.from(result['data']);
-        });
-      }
-    } catch (e) {
-      LogUtil.e('数据总览加载失败: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Constants.BG_COLOR,
-      body: Consumer<UserNotifier>(builder: (context, userNotifier, _) {
-        final user = userNotifier.user;
-        final isLogin = userNotifier.isLogin;
-        return RefreshIndicator(
-          onRefresh: _loadOverview,
-          child: ListView(
-            padding: EdgeInsets.only(bottom: 160.w),
-            children: [
-              _buildHeader(user, isLogin),
-              SizedBox(height: 24.w),
-              _buildOverview(),
-              SizedBox(height: 24.w),
-              _buildMenuGrid(),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-
-  // 用户头卡
-  Widget _buildHeader(User? user, bool isLogin) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(32.w, 120.w, 32.w, 48.w),
-      decoration: BoxDecoration(
-        color: Constants.PRIMARY_COLOR,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(40.w)),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => _requireLogin(isLogin),
-            child: NetImage(
-              url: isLogin ? user?.avatar : null,
-              width: 120.w,
-              height: 120.w,
-              borderRadius: 60.w,
-            ),
-          ),
-          SizedBox(width: 24.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () => _requireLogin(isLogin),
-                  child: Text(
-                    isLogin ? (user?.nickname ?? '路亚钓友') : '点击登录',
-                    style: TextStyle(
-                      fontSize: 36.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 12.w),
-                Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.w),
-                  decoration: BoxDecoration(
-                    color: Constants.HIGHLIGHT_COLOR.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(24.w),
-                  ),
-                  child: Text(
-                    _tierLabel(isLogin ? user?.subscribeTier : 'free'),
-                    style: TextStyle(
-                      fontSize: 22.sp,
-                      color: Constants.HIGHLIGHT_COLOR,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 订阅入口
-          GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SubscriptionPage()),
-              );
-            },
-            child: Icon(Icons.workspace_premium,
-                size: 48.w, color: Constants.HIGHLIGHT_COLOR),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 数据总览
-  Widget _buildOverview() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 32.w),
-      padding: EdgeInsets.symmetric(vertical: 32.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.w),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildOverviewItem('鱼获', '${_overview['catch_count'] ?? 0}'),
-          _buildOverviewItem('解锁鱼种', '${_overview['species_count'] ?? 0}'),
-          _buildOverviewItem('勋章', '${_overview['medal_count'] ?? 0}'),
-          _buildOverviewItem('挑战完成', '${_overview['challenge_count'] ?? 0}'),
-        ],
-      ),
-    );
-  }
-
-  // 总览项
-  Widget _buildOverviewItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 36.sp,
-            fontWeight: FontWeight.w700,
-            color: Constants.PRIMARY_COLOR,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Constants.INPUT_BG,
+        body: SingleChildScrollView(
+          padding: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [_buildBody(context)],
           ),
         ),
-        SizedBox(height: 8.w),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 24.sp,
-            color: Constants.TEXT_SECONDARY_COLOR,
+      ),
+    );
+  }
+
+  // ===== 顶部：照片头 + 统计 + VIP条 + 内容面板 =====
+  Widget _buildBody(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 照片头部：照片只铺头部区域（底部多留 20，被 VIP 深色条上移遮盖）
+        Stack(
+          children: [
+            // 背景照片（带占位兜底）
+            Positioned.fill(
+              child: NetImage(
+                url: 'https://picsum.photos/seed/luji-mine-hero/1170/720',
+                fit: BoxFit.cover,
+              ),
+            ),
+            // 暗色遮罩（非 positioned 子组件，决定 Stack 尺寸）
+            Container(
+              color: Colors.black.withValues(alpha: 0.30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SafeArea(bottom: false, child: _buildHeader(context)),
+                  SizedBox(height: 26.w),
+                  _buildStats(),
+                  SizedBox(height: 42.w),
+                ],
+              ),
+            ),
+          ],
+        ),
+        // VIP 深色条 + 浅色面板整体上移 20，盖住照片头部底部（与首页面板遮 banner 同方式）
+        Transform.translate(
+          offset: Offset(0, -20.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // VIP 会员条：圆角+金边压在照片上
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1E1E1E), Color(0xFF3C3C3C)],
+                  ),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24.r),
+                  ),
+                  border: Border(
+                    top: BorderSide(
+                      color: const Color(0xFFC9962A),
+                      width: 1.2.w,
+                    ),
+                  ),
+                ),
+                child: GestureDetector(
+                  onTap: () => _goSubscription(context),
+                  child: _buildVipBar(),
+                ),
+              ),
+              // 浅色内容面板：紧贴 VIP 条下方（页尾下方透出同色背景）
+              Container(
+                color: Constants.INPUT_BG,
+                padding: EdgeInsets.fromLTRB(16.w, 16.w, 16.w, 120.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildGalleryCard(context),
+                    SizedBox(height: 18.w),
+                    _buildMedalCard(context),
+                    SizedBox(height: 18.w),
+                    _buildTimelineCard(),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  // 功能入口宫格
-  Widget _buildMenuGrid() {
-    final menus = [
-      {'icon': Icons.auto_stories, 'label': '数字履历', 'color': Constants.PRIMARY_COLOR, 'route': 'resume'},
-      {'icon': Icons.military_tech, 'label': '勋章墙', 'color': Constants.HIGHLIGHT_COLOR, 'route': 'medal'},
-      {'icon': Icons.set_meal, 'label': '鱼种图鉴', 'color': _successIconColor, 'route': 'fish'},
-      {'icon': Icons.build_outlined, 'label': '装备库', 'color': Constants.WARNING_COLOR, 'route': 'gear'},
-      {'icon': Icons.emoji_events_outlined, 'label': '挑战', 'color': Constants.PRIMARY_COLOR, 'route': 'challenge'},
-      {'icon': Icons.workspace_premium_outlined, 'label': '订阅', 'color': Constants.HIGHLIGHT_COLOR, 'route': 'subscription'},
-    ];
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 32.w),
-      padding: EdgeInsets.symmetric(vertical: 32.w, horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.w),
-      ),
-      child: GridView.count(
-        crossAxisCount: 3,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        childAspectRatio: 1.2,
-        children: menus.map((menu) {
-          return GestureDetector(
-            onTap: () => _handleMenuTap(menu['route'] as String),
+  // ===== 用户信息 =====
+  Widget _buildHeader(BuildContext context) {
+    final user = MineData.user;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20.w, 8.w, 20.w, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 头像
+          Container(
+            padding: EdgeInsets.all(2.5.w),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2.5.w),
+            ),
+            child: NetImage(
+              url: user.avatar,
+              width: 52.w,
+              height: 52.w,
+              borderRadius: 26.w,
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 88.w,
-                  height: 88.w,
-                  decoration: BoxDecoration(
-                    color: (menu['color'] as Color).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(24.w),
-                  ),
-                  child: Icon(menu['icon'] as IconData,
-                      size: 44.w, color: menu['color'] as Color),
+                // 昵称 + 徽章
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        user.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    _nameBadge('Lv.5', const [
+                      Color(0xFFE3B367),
+                      Color(0xFFD9A24A),
+                    ]),
+                    SizedBox(width: 6.w),
+                    _nameBadge('路亚先锋', const [
+                      Color(0xFF1C91F5),
+                      Color(0xFF1384E5),
+                    ]),
+                  ],
                 ),
-                SizedBox(height: 12.w),
+                SizedBox(height: 8.w),
+                // 位置
+                Row(
+                  children: [
+                    Icon(
+                      RemixIcons.map_pin_2_fill,
+                      size: 14.w,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      user.location,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8.w),
+          // 设置入口（返回后刷新，跟随语言等全局配置）
+          GestureDetector(
+            onTap: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MoreSettingsPage()),
+              );
+              if (mounted) setState(() {});
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: EdgeInsets.all(4.w),
+              child: Icon(
+                RemixIcons.settings_fill,
+                size: 24.w,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 昵称小徽章
+  Widget _nameBadge(String text, List<Color> colors) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.5.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: colors),
+        borderRadius: BorderRadius.circular(5.r),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  // ===== 数据统计 =====
+  Widget _buildStats() {
+    // 统计标签中英文对照（与 MineData.stats 顺序一致）
+    const enLabels = [
+      'Total Catches',
+      'Species Unlocked',
+      'Total Weight',
+      'Best Catch',
+    ];
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.w),
+      child: Row(
+        children: List.generate(MineData.stats.length, (index) {
+          final item = MineData.stats[index];
+          return Expanded(
+            child: Column(
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    item['value']!,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 6.w),
                 Text(
-                  menu['label'] as String,
+                  Global.t(item['label']!, enLabels[index]),
                   style: TextStyle(
-                    fontSize: 26.sp,
-                    color: Constants.TEXT_DEFAULT_COLOR,
+                    fontSize: 12.sp,
+                    color: Colors.white.withValues(alpha: 0.72),
                   ),
                 ),
               ],
             ),
           );
-        }).toList(),
+        }),
       ),
     );
   }
 
-  // 菜单跳转（未登录统一拦截）
-  void _handleMenuTap(String route) {
-    final isLogin =
-        Provider.of<UserNotifier>(context, listen: false).isLogin;
-    if (!isLogin) {
-      _goLogin();
-      return;
-    }
-    switch (route) {
-      case 'resume':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const DigitalResumePage()),
-        );
-        break;
-      case 'medal':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MedalWallPage()),
-        );
-        break;
-      case 'fish':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const FishSpeciesListPage()),
-        );
-        break;
-      case 'gear':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const GearLibraryPage()),
-        );
-        break;
-      case 'challenge':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ChallengeListPage()),
-        );
-        break;
-      case 'subscription':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const SubscriptionPage()),
-        );
-        break;
-    }
-  }
-
-  // 需要登录
-  void _requireLogin(bool isLogin) {
-    if (!isLogin) _goLogin();
-  }
-
-  void _goLogin() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
+  // ===== VIP 会员中心条 =====
+  Widget _buildVipBar() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20.w, 14.w, 20.w, 14.w),
+      child: Row(
+        children: [
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [Color(0xFFF8DE8B), Color(0xFFD9A24A)],
+            ).createShader(bounds),
+            child: Text(
+              'VIP',
+              style: TextStyle(
+                fontSize: 19.sp,
+                fontWeight: FontWeight.w900,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Text(
+            Global.t('会员中心', 'Membership'),
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            Global.t('解锁', 'Unlock'),
+            style: TextStyle(fontSize: 12.sp, color: Colors.white),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              Global.t(
+                ' 无限鱼获记录 · 私密钓点 · AI识鱼额度',
+                ' Unlimited records · Private spots · AI ID',
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9C9C9C)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // 订阅档位文案
-  String _tierLabel(String? tier) {
-    const map = {'free': '免费版', 'pro': 'Pro会员', 'master': 'Master大师'};
-    return map[tier] ?? '免费版';
+  // ===== 我的图鉴 =====
+  Widget _buildGalleryCard(BuildContext context) {
+    return Container(
+      // 卡片自身裁剪：横向滑动的鱼种卡不会越出卡片边界（与设计稿一致，右侧贴边截断）
+      clipBehavior: Clip.antiAlias,
+      padding: EdgeInsets.fromLTRB(16.w, 16.w, 0, 16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(right: 16.w),
+            child: Row(
+              children: [
+                Text(
+                  Global.t('我的图鉴', 'My Collection'),
+                  style: _cardTitleStyle(),
+                ),
+                const Spacer(),
+                Text(
+                  '16',
+                  style: TextStyle(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w800,
+                    color: Constants.INK,
+                  ),
+                ),
+                Text(
+                  ' /245',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: Constants.GRAY_LIGHT,
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                _borderPill(
+                  Global.t('查看全部', 'View All'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FishSpeciesListPage(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 14.w),
+          SizedBox(
+            height: 80.w,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              itemCount: MineData.gallery.length,
+              separatorBuilder: (_, _) => SizedBox(width: 10.w),
+              itemBuilder: (_, index) {
+                final fish = MineData.gallery[index];
+                return _fishTile(fish);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 图鉴鱼种卡
+  Widget _fishTile(GalleryFish fish) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14.r),
+      child: SizedBox(
+        width: 80.w,
+        height: 80.w,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            NetImage(url: fish.image),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 6.w,
+              child: Center(
+                child: Text(
+                  fish.name,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    shadows: const [
+                      Shadow(color: Colors.black45, blurRadius: 4),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===== 我的勋章 =====
+  Widget _buildMedalCard(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(Global.t('我的勋章', 'My Medals'), style: _cardTitleStyle()),
+              const Spacer(),
+              _borderPill(
+                Global.t('查看全部', 'View All'),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const MedalListPage()),
+                  );
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 16.w),
+          Row(
+            children: MineData.medals.map((medal) {
+              return Expanded(
+                child: Column(
+                  children: [
+                    HexMedal(style: medal.style, size: 62),
+                    SizedBox(height: 10.w),
+                    Text(
+                      medal.title,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.5.sp,
+                        height: 1.3,
+                        color: Constants.INK,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===== 我的时间轴 =====
+  Widget _buildTimelineCard() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(Global.t('我的时间轴', 'My Timeline'), style: _cardTitleStyle()),
+          SizedBox(height: 20.w),
+          ...List.generate(MineData.timeline.length, (index) {
+            final isLast = index == MineData.timeline.length - 1;
+            return _timelineItem(MineData.timeline[index], isLast: isLast);
+          }),
+        ],
+      ),
+    );
+  }
+
+  // 时间轴单项
+  Widget _timelineItem(TimelineEvent event, {required bool isLast}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 左列：图标块 + 节点 + 虚线
+        SizedBox(
+          width: 64.w,
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.bottomCenter,
+                children: [
+                  _timelineTile(event),
+                  Positioned(
+                    bottom: -7.w,
+                    child: Container(
+                      width: 13.w,
+                      height: 13.w,
+                      decoration: BoxDecoration(
+                        color: Constants.LIME,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2.5.w),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (!isLast)
+                CustomPaint(
+                  size: Size(1.5.w, 30.w),
+                  painter: _DashedLinePainter(),
+                ),
+            ],
+          ),
+        ),
+        SizedBox(width: 20.w),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(top: 4.w, bottom: isLast ? 0 : 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    children: event.title
+                        .map(
+                          (seg) => TextSpan(
+                            text: seg.text,
+                            style: TextStyle(
+                              fontSize: 16.5.sp,
+                              fontWeight: seg.bold
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: Constants.INK,
+                              height: 1.35,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                SizedBox(height: 6.w),
+                Text(
+                  event.date,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: Constants.GRAY_LIGHT,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 时间轴图标块
+  Widget _timelineTile(TimelineEvent event) {
+    Widget child;
+    switch (event.type) {
+      case TimelineType.record:
+        child = NetImage(
+          url: event.image,
+          width: 64.w,
+          height: 64.w,
+          borderRadius: 16.r,
+        );
+        break;
+      case TimelineType.spot:
+        child = Container(
+          width: 64.w,
+          height: 64.w,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Center(
+            child: Icon(
+              RemixIcons.map_pin_2_fill,
+              size: 30.w,
+              color: const Color(0xFF1B8DF0),
+            ),
+          ),
+        );
+        break;
+      case TimelineType.medal:
+        child = Container(
+          width: 64.w,
+          height: 64.w,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 10.w,
+                offset: Offset(0, 3.w),
+              ),
+            ],
+          ),
+          child: Center(child: HexMedal(style: MedalStyle.gold, size: 52)),
+        );
+        break;
+    }
+    return child;
+  }
+
+  // ===== 通用小部件 =====
+
+  // 卡片标题
+  TextStyle _cardTitleStyle() {
+    return TextStyle(
+      fontSize: 16.sp,
+      fontWeight: FontWeight.w700,
+      color: Constants.INK,
+    );
+  }
+
+  // 描边胶囊（查看全部）
+  Widget _borderPill(String text, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 26.w,
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(13.r),
+          border: Border.all(color: Constants.BORDER),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 12.sp, color: Constants.GRAY),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _goSubscription(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const SubscriptionPage()));
   }
 }
 
+/// 时间轴垂直虚线
+class _DashedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Constants.INK
+      ..strokeWidth = 1.5.w
+      ..style = PaintingStyle.stroke;
+    const dash = 3.0;
+    const gap = 3.0;
+    double y = 0;
+    while (y < size.height) {
+      canvas.drawLine(
+        Offset(size.width / 2, y),
+        Offset(size.width / 2, (y + dash).clamp(0.0, size.height)),
+        paint,
+      );
+      y += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
+}

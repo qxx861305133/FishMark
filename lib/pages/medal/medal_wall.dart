@@ -64,7 +64,7 @@ class _MedalWallPageState extends State<MedalWallPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text('勋章墙', style: TextStyle(fontSize: 34.sp)),
+        title: Text('勋章墙', style: TextStyle(fontSize: 17.sp)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -74,7 +74,7 @@ class _MedalWallPageState extends State<MedalWallPage> {
               : RefreshIndicator(
                   onRefresh: _loadMedals,
                   child: ListView(
-                    padding: EdgeInsets.fromLTRB(32.w, 24.w, 32.w, 160.w),
+                    padding: EdgeInsets.fromLTRB(16.w, 12.w, 16.w, 80.w),
                     children:
                         _rarityOrder.map((rarity) => _buildGroup(rarity)).toList(),
                   ),
@@ -85,37 +85,37 @@ class _MedalWallPageState extends State<MedalWallPage> {
   // 按稀有度分组
   Widget _buildGroup(String rarity) {
     final medals = _medals.where((m) => m.rarity == rarity).toList();
-    if (medals.isEmpty) return SizedBox(height: 8.w);
+    if (medals.isEmpty) return SizedBox(height: 4.w);
     final unlockedCount =
         medals.where((m) => m.unlocked == true).length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.w),
+          padding: EdgeInsets.symmetric(vertical: 12.w),
           child: Row(
             children: [
               Container(
-                width: 8.w,
-                height: 32.w,
-                margin: EdgeInsets.only(right: 16.w),
+                width: 4.w,
+                height: 16.w,
+                margin: EdgeInsets.only(right: 8.w),
                 decoration: BoxDecoration(
                   color: Constants.MEDAL_RARITY_COLORS[rarity],
-                  borderRadius: BorderRadius.circular(4.w),
+                  borderRadius: BorderRadius.circular(2.w),
                 ),
               ),
               Text(
                 '${_rarityNames[rarity]}勋章',
                 style: TextStyle(
-                  fontSize: 30.sp,
+                  fontSize: 15.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: 6.w),
               Text(
                 '$unlockedCount/${medals.length}',
                 style: TextStyle(
-                  fontSize: 24.sp,
+                  fontSize: 12.sp,
                   color: Constants.TEXT_LIGHT_COLOR,
                 ),
               ),
@@ -123,18 +123,18 @@ class _MedalWallPageState extends State<MedalWallPage> {
           ),
         ),
         Container(
-          padding: EdgeInsets.symmetric(vertical: 32.w),
+          padding: EdgeInsets.symmetric(vertical: 16.w),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24.w),
+            borderRadius: BorderRadius.circular(12.w),
           ),
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              mainAxisSpacing: 24.w,
+              mainAxisSpacing: 12.w,
               childAspectRatio: 0.75,
             ),
             itemCount: medals.length,
@@ -166,7 +166,7 @@ class _MedalWallPageState extends State<MedalWallPage> {
       builder: (_) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(32.w),
+          borderRadius: BorderRadius.circular(16.w),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -177,23 +177,23 @@ class _MedalWallPageState extends State<MedalWallPage> {
               icon: Icons.workspace_premium_outlined,
               unlocked: unlocked,
             ),
-            SizedBox(height: 24.w),
+            SizedBox(height: 12.w),
             Text(
               medal.description ?? '',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 26.sp,
+                fontSize: 13.sp,
                 color: Constants.TEXT_SECONDARY_COLOR,
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 16.w),
+            SizedBox(height: 8.w),
             if (!unlocked && medal.condition != null)
               Text(
                 '解锁条件：${medal.condition}',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 24.sp,
+                  fontSize: 12.sp,
                   color: Constants.TEXT_LIGHT_COLOR,
                 ),
               ),
@@ -201,7 +201,7 @@ class _MedalWallPageState extends State<MedalWallPage> {
               Text(
                 '解锁于 ${medal.unlocked_at}',
                 style: TextStyle(
-                  fontSize: 24.sp,
+                  fontSize: 12.sp,
                   color: Constants.HIGHLIGHT_COLOR,
                 ),
               ),
@@ -213,7 +213,7 @@ class _MedalWallPageState extends State<MedalWallPage> {
             child: Text(
               '知道了',
               style: TextStyle(
-                fontSize: 28.sp,
+                fontSize: 14.sp,
                 color: Constants.PRIMARY_COLOR,
               ),
             ),

@@ -12,6 +12,7 @@ import 'package:FishMark/config/log_util.dart';
 import 'package:FishMark/pages/splash_gate.dart';
 import 'package:FishMark/provider/profile.dart';
 import 'package:FishMark/provider/tab_provider.dart';
+import 'package:FishMark/utils/wechat_share_util.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,9 @@ Future<void> main() async {
   ]);
 
   runApp(const MyApp());
+
+  // 注册微信分享（fluwx，非阻塞；未安装微信时分享走模拟提示）
+  WechatShareUtil.ensureRegistered();
 
   FlutterError.onError = (details) {
     LogUtil.v('❌ 全局异常: ${details.exception}');
@@ -45,8 +49,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      // 750宽设计稿基准（.w/.sp 数值按 750 标注换算）
-      designSize: const Size(750, 1631),
+      // 390宽设计稿基准（1170px@3x，.w/.sp 数值按 390 标注换算）
+      designSize: const Size(390, 884),
       minTextAdapt: true,
       splitScreenMode: true,
       useInheritedMediaQuery: true,

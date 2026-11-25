@@ -127,20 +127,20 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
           children: [
             NetImage(
               url: challenge.cover,
-              height: 400.w,
+              height: 200.w,
               width: double.infinity,
             ),
             SafeArea(
               child: IconButton(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: Container(
-                  padding: EdgeInsets.all(8.w),
+                  padding: EdgeInsets.all(4.w),
                   decoration: const BoxDecoration(
                     color: Colors.black38,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.arrow_back,
-                      size: 36.w, color: Colors.white),
+                      size: 18.w, color: Colors.white),
                 ),
               ),
             ),
@@ -149,41 +149,41 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
         // 标题区
         Container(
           color: Colors.white,
-          padding: EdgeInsets.all(32.w),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 challenge.title ?? '',
                 style: TextStyle(
-                  fontSize: 40.sp,
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 16.w),
+              SizedBox(height: 8.w),
               Text(
                 challenge.description ?? '',
                 style: TextStyle(
-                  fontSize: 26.sp,
+                  fontSize: 13.sp,
                   color: Constants.TEXT_SECONDARY_COLOR,
                   height: 1.6,
                 ),
               ),
-              SizedBox(height: 24.w),
+              SizedBox(height: 12.w),
               // 奖励
               Row(
                 children: [
                   Container(
-                    width: 80.w,
-                    height: 80.w,
+                    width: 40.w,
+                    height: 40.w,
                     decoration: BoxDecoration(
                       color: Constants.HIGHLIGHT_COLOR.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.military_tech,
-                        size: 48.w, color: Constants.HIGHLIGHT_COLOR),
+                        size: 24.w, color: Constants.HIGHLIGHT_COLOR),
                   ),
-                  SizedBox(width: 20.w),
+                  SizedBox(width: 10.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,14 +191,14 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
                         Text(
                           '完成奖励：${challenge.reward?.name ?? '神秘勋章'}',
                           style: TextStyle(
-                            fontSize: 28.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
                           '+${challenge.points ?? 0} 积分',
                           style: TextStyle(
-                            fontSize: 24.sp,
+                            fontSize: 12.sp,
                             color: Constants.HIGHLIGHT_COLOR,
                           ),
                         ),
@@ -210,11 +210,11 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
             ],
           ),
         ),
-        SizedBox(height: 24.w),
+        SizedBox(height: 12.w),
         // 进度区
         Container(
           color: Colors.white,
-          padding: EdgeInsets.all(32.w),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -224,25 +224,25 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
                   Text(
                     '挑战目标',
                     style: TextStyle(
-                      fontSize: 30.sp,
+                      fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     challenge.target ?? '',
                     style: TextStyle(
-                      fontSize: 26.sp,
+                      fontSize: 13.sp,
                       color: Constants.TEXT_SECONDARY_COLOR,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 24.w),
+              SizedBox(height: 12.w),
               ClipRRect(
-                borderRadius: BorderRadius.circular(8.w),
+                borderRadius: BorderRadius.circular(4.w),
                 child: LinearProgressIndicator(
                   value: ratio,
-                  minHeight: 16.w,
+                  minHeight: 8.w,
                   backgroundColor: Constants.BG_COLOR,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     ratio >= 1
@@ -251,21 +251,21 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 16.w),
+              SizedBox(height: 8.w),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     '当前进度',
                     style: TextStyle(
-                      fontSize: 24.sp,
+                      fontSize: 12.sp,
                       color: Constants.TEXT_LIGHT_COLOR,
                     ),
                   ),
                   Text(
                     '$progress / $target',
                     style: TextStyle(
-                      fontSize: 28.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
                       color: ratio >= 1
                           ? Constants.HIGHLIGHT_COLOR
@@ -275,16 +275,16 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
                 ],
               ),
               if (challenge.end_at != null) ...[
-                SizedBox(height: 24.w),
+                SizedBox(height: 12.w),
                 Row(
                   children: [
                     Icon(Icons.schedule,
-                        size: 28.w, color: Constants.TEXT_LIGHT_COLOR),
-                    SizedBox(width: 8.w),
+                        size: 14.w, color: Constants.TEXT_LIGHT_COLOR),
+                    SizedBox(width: 4.w),
                     Text(
                       '截止时间：${challenge.end_at}',
                       style: TextStyle(
-                        fontSize: 24.sp,
+                        fontSize: 12.sp,
                         color: Constants.TEXT_LIGHT_COLOR,
                       ),
                     ),
@@ -294,7 +294,7 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
             ],
           ),
         ),
-        SizedBox(height: 48.w),
+        SizedBox(height: 24.w),
       ],
     );
   }
@@ -305,7 +305,7 @@ class _ChallengeDetailPageState extends State<ChallengeDetailPage> {
     return SafeArea(
       child: Container(
         color: Colors.white,
-        padding: EdgeInsets.fromLTRB(32.w, 16.w, 32.w, 16.w),
+        padding: EdgeInsets.fromLTRB(16.w, 8.w, 16.w, 8.w),
         child: RoundButton(
           text: status == 'not_join'
               ? '参与挑战'

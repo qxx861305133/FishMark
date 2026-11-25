@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:FishMark/config/constants.dart';
 import 'package:FishMark/config/log_util.dart';
@@ -8,6 +9,7 @@ import 'package:FishMark/models/spot.dart';
 import 'package:FishMark/widgets/empty_widget.dart';
 import 'package:FishMark/widgets/net_image.dart';
 import 'package:FishMark/widgets/section_header.dart';
+import 'package:FishMark/widgets/ui_kit.dart';
 
 /// @desc 钓点详情页：详情 + 常见鱼种 + 钓友点评
 class SpotDetailPage extends StatefulWidget {
@@ -79,6 +81,15 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Constants.BG_COLOR,
+      // 打卡记录按钮固定在底部，不随内容滚动
+      bottomNavigationBar: SafeArea(
+        minimum: EdgeInsets.fromLTRB(16.w, 6.w, 16.w, 6.w),
+        child: InkButton(
+          text: '打卡记录',
+          height: 44,
+          onPressed: () => Fluttertoast.showToast(msg: '演示数据，敬请期待'),
+        ),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _spot == null
@@ -95,18 +106,18 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
         // 封面 + 返回按钮
         Stack(
           children: [
-            NetImage(url: spot.cover, height: 440.w, width: double.infinity),
+            NetImage(url: spot.cover, height: 220.w, width: double.infinity),
             SafeArea(
               child: IconButton(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: Container(
-                  padding: EdgeInsets.all(8.w),
+                  padding: EdgeInsets.all(4.w),
                   decoration: const BoxDecoration(
                     color: Colors.black38,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.arrow_back,
-                      size: 36.w, color: Colors.white),
+                      size: 18.w, color: Colors.white),
                 ),
               ),
             ),
@@ -115,7 +126,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
         // 基础信息
         Container(
           color: Colors.white,
-          padding: EdgeInsets.all(32.w),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -125,33 +136,33 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                     child: Text(
                       spot.name ?? '',
                       style: TextStyle(
-                        fontSize: 40.sp,
+                        fontSize: 20.sp,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  Icon(Icons.star, size: 32.w, color: Constants.HIGHLIGHT_COLOR),
-                  SizedBox(width: 4.w),
+                  Icon(Icons.star, size: 16.w, color: Constants.HIGHLIGHT_COLOR),
+                  SizedBox(width: 2.w),
                   Text(
                     (spot.rating ?? 0).toStringAsFixed(1),
                     style: TextStyle(
-                      fontSize: 32.sp,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: Constants.HIGHLIGHT_COLOR,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16.w),
+              SizedBox(height: 8.w),
               Row(
                 children: [
-                  Icon(Icons.place, size: 30.w, color: Constants.TEXT_LIGHT_COLOR),
-                  SizedBox(width: 8.w),
+                  Icon(Icons.place, size: 15.w, color: Constants.TEXT_LIGHT_COLOR),
+                  SizedBox(width: 4.w),
                   Expanded(
                     child: Text(
                       spot.address ?? '',
                       style: TextStyle(
-                        fontSize: 26.sp,
+                        fontSize: 13.sp,
                         color: Constants.TEXT_SECONDARY_COLOR,
                       ),
                     ),
@@ -161,7 +172,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
             ],
           ),
         ),
-        SizedBox(height: 24.w),
+        SizedBox(height: 12.w),
         // 常见鱼种
         if (spot.fish_names != null && spot.fish_names!.isNotEmpty)
           Container(
@@ -171,24 +182,24 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
               children: [
                 const SectionHeader(title: '常见鱼种'),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(32.w, 0, 32.w, 32.w),
+                  padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.w),
                   child: Wrap(
-                    spacing: 16.w,
-                    runSpacing: 16.w,
+                    spacing: 8.w,
+                    runSpacing: 8.w,
                     children: spot.fish_names!
                         .map(
                           (name) => Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 24.w, vertical: 12.w),
+                                horizontal: 12.w, vertical: 6.w),
                             decoration: BoxDecoration(
                               color: Constants.PRIMARY_COLOR
                                   .withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(32.w),
+                              borderRadius: BorderRadius.circular(16.w),
                             ),
                             child: Text(
                               name,
                               style: TextStyle(
-                                fontSize: 26.sp,
+                                fontSize: 13.sp,
                                 color: Constants.PRIMARY_COLOR,
                               ),
                             ),
@@ -200,24 +211,24 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
               ],
             ),
           ),
-        SizedBox(height: 24.w),
+        SizedBox(height: 12.w),
         // 收费/开放时间
         Container(
           color: Colors.white,
-          padding: EdgeInsets.all(32.w),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             children: [
               _buildInfoRow(Icons.paid_outlined, '收费说明', spot.fee ?? '免费'),
-              SizedBox(height: 24.w),
+              SizedBox(height: 12.w),
               _buildInfoRow(Icons.schedule_outlined, '开放时间', spot.open_time ?? '全天'),
               if (spot.description != null) ...[
-                SizedBox(height: 24.w),
+                SizedBox(height: 12.w),
                 _buildInfoRow(Icons.info_outline, '详细介绍', spot.description!),
               ],
             ],
           ),
         ),
-        SizedBox(height: 24.w),
+        SizedBox(height: 12.w),
         // 点评
         Container(
           color: Colors.white,
@@ -229,11 +240,11 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
               ),
               _reviews.isEmpty
                   ? SizedBox(
-                      height: 200.w,
+                      height: 100.w,
                       child: const EmptyWidget(text: '还没有点评，钓过就来评价吧'),
                     )
                   : Padding(
-                      padding: EdgeInsets.fromLTRB(32.w, 0, 32.w, 32.w),
+                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.w),
                       child: Column(
                         children: _reviews.map(_buildReviewItem).toList(),
                       ),
@@ -241,7 +252,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
             ],
           ),
         ),
-        SizedBox(height: 48.w),
+        SizedBox(height: 24.w),
       ],
     );
   }
@@ -251,21 +262,21 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 32.w, color: Constants.PRIMARY_COLOR),
-        SizedBox(width: 16.w),
+        Icon(icon, size: 16.w, color: Constants.PRIMARY_COLOR),
+        SizedBox(width: 8.w),
         Text(
           label,
           style: TextStyle(
-            fontSize: 26.sp,
+            fontSize: 13.sp,
             color: Constants.TEXT_SECONDARY_COLOR,
           ),
         ),
-        SizedBox(width: 24.w),
+        SizedBox(width: 12.w),
         Expanded(
           child: Text(
             value,
             style: TextStyle(
-              fontSize: 26.sp,
+              fontSize: 13.sp,
               color: Constants.TEXT_DEFAULT_COLOR,
             ),
           ),
@@ -277,11 +288,11 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
   // 点评项
   Widget _buildReviewItem(Map<String, dynamic> review) {
     return Container(
-      margin: EdgeInsets.only(bottom: 24.w),
-      padding: EdgeInsets.all(24.w),
+      margin: EdgeInsets.only(bottom: 12.w),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: Constants.BG_COLOR,
-        borderRadius: BorderRadius.circular(16.w),
+        borderRadius: BorderRadius.circular(8.w),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,15 +301,15 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
             children: [
               NetImage(
                 url: review['user']?['avatar'],
-                width: 56.w,
-                height: 56.w,
-                borderRadius: 28.w,
+                width: 28.w,
+                height: 28.w,
+                borderRadius: 14.w,
               ),
-              SizedBox(width: 16.w),
+              SizedBox(width: 8.w),
               Text(
                 review['user']?['nickname'] ?? '钓友',
                 style: TextStyle(
-                  fontSize: 26.sp,
+                  fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -306,17 +317,17 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
               Text(
                 review['created_at'] ?? '',
                 style: TextStyle(
-                  fontSize: 22.sp,
+                  fontSize: 11.sp,
                   color: Constants.TEXT_LIGHT_COLOR,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 16.w),
+          SizedBox(height: 8.w),
           Text(
             review['content'] ?? '',
             style: TextStyle(
-              fontSize: 26.sp,
+              fontSize: 13.sp,
               color: Constants.TEXT_DEFAULT_COLOR,
             ),
           ),

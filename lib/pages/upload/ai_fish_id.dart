@@ -3,12 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:image_picker/image_picker.dart';
 
 import 'package:FishMark/config/constants.dart';
 import 'package:FishMark/config/log_util.dart';
 import 'package:FishMark/http/api.dart';
 import 'package:FishMark/pages/upload/ai_fish_result.dart';
+import 'package:FishMark/utils/media_picker_util.dart';
 
 /// @desc AI识鱼页：拍照/相册 → 百炼识别 → 结果页
 class AiFishIdPage extends StatefulWidget {
@@ -19,34 +19,25 @@ class AiFishIdPage extends StatefulWidget {
 }
 
 class _AiFishIdPageState extends State<AiFishIdPage> {
-  final ImagePicker _picker = ImagePicker();
   Uint8List? _imageBytes;
   bool _recognizing = false;
 
-  // 拍照识别
+  // 拍照识别（含相机权限处理）
   Future<void> _takePhoto() async {
-    try {
-      final file = await _picker.pickImage(source: ImageSource.camera);
-      if (file == null) return;
-      final bytes = await file.readAsBytes();
-      setState(() => _imageBytes = bytes);
-      await _recognize(bytes, filename: file.name);
-    } catch (e) {
-      LogUtil.e('拍照失败: $e');
-    }
+    final file = await MediaPickerUtil.takePhoto(context);
+    if (!mounted || file == null) return;
+    final bytes = await file.readAsBytes();
+    setState(() => _imageBytes = bytes);
+    await _recognize(bytes, filename: file.name);
   }
 
-  // 相册识别
+  // 相册识别（含相册权限处理）
   Future<void> _pickImage() async {
-    try {
-      final file = await _picker.pickImage(source: ImageSource.gallery);
-      if (file == null) return;
-      final bytes = await file.readAsBytes();
-      setState(() => _imageBytes = bytes);
-      await _recognize(bytes, filename: file.name);
-    } catch (e) {
-      LogUtil.e('相册选择失败: $e');
-    }
+    final file = await MediaPickerUtil.pickSingleImage(context);
+    if (!mounted || file == null) return;
+    final bytes = await file.readAsBytes();
+    setState(() => _imageBytes = bytes);
+    await _recognize(bytes, filename: file.name);
   }
 
   // 调用AI识鱼接口

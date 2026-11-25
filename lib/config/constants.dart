@@ -27,6 +27,24 @@ class Constants {
   // 分页大小
   static const int MAX_PAGE_SIZE = 20;
 
+  // ===== 1104 设计稿色彩体系 =====
+  // 主色（荧光柠檬绿）
+  static const Color LIME = Color(0xFFC7FF3F);
+  // 墨色主文字
+  static const Color INK = Color(0xFF101010);
+  // 次级文字
+  static const Color GRAY = Color(0xFF666666);
+  // 占位/提示文字
+  static const Color GRAY_LIGHT = Color(0xFF999999);
+  // 输入框底色
+  static const Color INPUT_BG = Color(0xFFF5F7FB);
+  // 描边
+  static const Color BORDER = Color(0xFFE5E7EB);
+  // 顶部渐变起点（柠檬浅绿 → 白）
+  static const Color GRAD_TOP = Color(0xFFEEFFC5);
+  // 卡片底色
+  static const Color CARD_BG = Color(0xFFFFFFFF);
+
   // 主调色（深水蓝）
   static const Color PRIMARY_COLOR = Color.fromRGBO(11, 87, 98, 1.0);
   // 辅助色
@@ -63,6 +81,11 @@ class Constants {
   // 阿里云百炼（AI识鱼）
   static const String DASHSCOPE_API_URL =
       'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
+
+  // 微信开放平台（fluwx 分享用，占位 AppID，接入正式环境时替换）
+  static const String WX_APP_ID = 'wxd930ea5d5a228f5f';
+  // iOS 通用链接（微信回跳，占位）
+  static const String WX_UNIVERSAL_LINK = 'https://www.luji.cn/app/';
 
   // 默认占位图
   static const String DEFAULT_PLACEHOLDER =

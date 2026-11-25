@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:remixicon/remixicon.dart';
 
 import 'package:FishMark/config/constants.dart';
 import 'package:FishMark/pages/footer/explore_tab.dart';
 import 'package:FishMark/pages/footer/home_tab.dart';
 import 'package:FishMark/pages/footer/mine_tab.dart';
-import 'package:FishMark/pages/footer/report_tab.dart';
+import 'package:FishMark/pages/footer/gear_tab.dart';
 import 'package:FishMark/pages/upload/publish_sheet.dart';
 import 'package:FishMark/provider/tab_provider.dart';
 
-/// @desc 主框架：底部导航（首页/探索/发布/战报/我的）
+/// @desc 主框架：底部导航（首页/探索/上传/装备/我的）
 class HomePage extends StatefulWidget {
   final int tabIndex;
   const HomePage({super.key, this.tabIndex = 0});
@@ -21,7 +22,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final pageController = PageController();
-  // 存储4个页面
   late List<Widget> _bodys;
 
   @override
@@ -31,11 +31,10 @@ class _HomePageState extends State<HomePage> {
     _bodys = [
       const HomeTab(),
       const ExploreTab(),
-      const ReportTab(),
+      const GearTab(),
       const MineTab(),
     ];
 
-    // 跳转至某页
     if (widget.tabIndex != 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         onTabTap(widget.tabIndex);
@@ -50,20 +49,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   void onTabTap(int index) {
-    // 切换菜单
+    // 页面顺序：0首页 1探索 2装备 3我的
     Provider.of<TabProvider>(context, listen: false).updateTabIndex(index);
     pageController.jumpToPage(index);
   }
 
-  /// 中间发布按钮：唤起上传面板
+  /// 中间上传按钮：唤起上传面板
   void onPublishTap() {
     PublishSheet.show(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<TabProvider>(
-        builder: (context, tabProvider, _) {
+    return Consumer<TabProvider>(builder: (context, tabProvider, _) {
       return Scaffold(
         body: PageView(
           controller: pageController,
@@ -74,58 +72,54 @@ class _HomePageState extends State<HomePage> {
                 .updateTabIndex(index);
           },
         ),
-        floatingActionButton: PublishFabButton(
-          onTap: onPublishTap,
-        ),
-        floatingActionButtonLocation:
-            FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: BottomAppBar(
-          height: 120.w,
-          color: Colors.white,
-          elevation: 0,
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 8.w,
-          padding: EdgeInsets.zero,
-          child: Row(
-            children: [
-              _buildTabItem(
-                context,
-                index: 0,
-                icon: Icons.home_rounded,
-                label: '首页',
-                isActive: tabProvider.tabIndex == 0,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Constants.BORDER, width: 0.5.w),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 56.w,
+              child: Row(
+                children: [
+                  _buildTabItem(
+                    index: 0,
+                    icon: RemixIcons.home_5_fill,
+                    label: '首页',
+                    isActive: tabProvider.tabIndex == 0,
+                  ),
+                  _buildTabItem(
+                    index: 1,
+                    icon: RemixIcons.compass_3_line,
+                    label: '探索',
+                    isActive: tabProvider.tabIndex == 1,
+                  ),
+                  _buildPublishItem(),
+                  _buildTabItem(
+                    index: 2,
+                    icon: RemixIcons.briefcase_4_line,
+                    label: '装备',
+                    isActive: tabProvider.tabIndex == 2,
+                  ),
+                  _buildTabItem(
+                    index: 3,
+                    icon: RemixIcons.user_3_line,
+                    label: '我的',
+                    isActive: tabProvider.tabIndex == 3,
+                  ),
+                ],
               ),
-              _buildTabItem(
-                context,
-                index: 1,
-                icon: Icons.explore_outlined,
-                label: '探索',
-                isActive: tabProvider.tabIndex == 1,
-              ),
-              SizedBox(width: 120.w),
-              _buildTabItem(
-                context,
-                index: 2,
-                icon: Icons.description_outlined,
-                label: '战报',
-                isActive: tabProvider.tabIndex == 2,
-              ),
-              _buildTabItem(
-                context,
-                index: 3,
-                icon: Icons.person_outline,
-                label: '我的',
-                isActive: tabProvider.tabIndex == 3,
-              ),
-            ],
+            ),
           ),
         ),
       );
     });
   }
 
-  Widget _buildTabItem(
-    BuildContext context, {
+  Widget _buildTabItem({
     required int index,
     required IconData icon,
     required String label,
@@ -139,20 +133,16 @@ class _HomePageState extends State<HomePage> {
           children: [
             Icon(
               icon,
-              size: 48.w,
-              color: isActive
-                  ? Constants.PRIMARY_COLOR
-                  : Constants.TEXT_LIGHT_COLOR,
+              size: 24.w,
+              color: isActive ? Constants.INK : const Color(0xFFB3B3B3),
             ),
-            SizedBox(height: 4.w),
+            SizedBox(height: 2.w),
             Text(
               label,
               style: TextStyle(
-                fontSize: 22.sp,
-                color: isActive
-                    ? Constants.PRIMARY_COLOR
-                    : Constants.TEXT_LIGHT_COLOR,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 10.sp,
+                color: isActive ? Constants.INK : const Color(0xFFB3B3B3),
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],
@@ -160,33 +150,34 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-}
 
-/// @desc 中间发布按钮
-class PublishFabButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const PublishFabButton({super.key, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 108.w,
-        height: 108.w,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Constants.PRIMARY_COLOR,
-          border: Border.all(color: Colors.white, width: 6.w),
-          boxShadow: [
-            BoxShadow(
-              color: Constants.PRIMARY_COLOR.withValues(alpha: 0.3),
-              blurRadius: 16.w,
-              offset: Offset(0, 6.w),
+  /// 中间上传按钮（荧光绿圆形 + 黑色加号，向上突出于导航栏）
+  Widget _buildPublishItem() {
+    return Expanded(
+      child: Center(
+        child: GestureDetector(
+          onTap: onPublishTap,
+          child: Transform.translate(
+            offset: Offset(0, -14.w),
+            child: Container(
+              width: 52.w,
+              height: 52.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Constants.LIME,
+                border: Border.all(color: Colors.white, width: 3.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: Constants.LIME.withValues(alpha: 0.45),
+                    blurRadius: 14.w,
+                    offset: Offset(0, 5.w),
+                  ),
+                ],
+              ),
+              child: Icon(RemixIcons.add_line, size: 26.w, color: Constants.INK),
             ),
-          ],
+          ),
         ),
-        child: Icon(Icons.add, size: 56.w, color: Colors.white),
       ),
     );
   }
