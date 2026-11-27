@@ -30,7 +30,6 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   String? _avatarPath;
-  String? _location;
   bool _uploadingAvatar = false;
   bool _locating = false;
 
@@ -41,33 +40,16 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     super.dispose();
   }
 
-  // 更换头像：相册选图 → 上传 → user_update
+  // 更换头像：相册选图 → 本地预览（头像上传端点待服务端上线后接入）
   Future<void> _changeAvatar() async {
     if (_uploadingAvatar) return;
     final file = await MediaPickerUtil.pickSingleImage(context);
     if (!mounted || file == null) return;
     setState(() {
       _avatarPath = file.path;
-      _uploadingAvatar = true;
+      _uploadingAvatar = false;
     });
-    try {
-      final uploadResult = await Api().uploadAsset(file, 'upload_asset');
-      if (!mounted) return;
-      if (uploadResult['success'] && uploadResult['data'] != null) {
-        final url = uploadResult['data']['url'] ?? '';
-        await Api().post('user_update', data: {'avatar': url});
-        if (!mounted) return;
-        Fluttertoast.showToast(msg: Global.t('头像已更新', 'Avatar updated'));
-      } else {
-        Fluttertoast.showToast(msg: uploadResult['status']?['message'] ?? '上传失败');
-      }
-    } catch (e) {
-      LogUtil.e('头像上传失败: $e');
-      if (!mounted) return;
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
-    } finally {
-      if (mounted) setState(() => _uploadingAvatar = false);
-    }
+    // TODO: 图片上传端点待服务端上线后接入，届时上传照片换取 avatar_asset_id 并 PUT /users/me
   }
 
   // 定位获取所在地：定位权限 → 当前坐标 → 天地图逆地理编码
@@ -88,7 +70,6 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       if (!mounted) return;
       setState(() {
         if (text != null && text.isNotEmpty) {
-          _location = text;
           _locationController.text = text;
         }
       });
@@ -100,13 +81,12 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     }
   }
 
-  // 确认：保存昵称/所在地 → 进首页
+  // 确认：保存昵称 → PUT /users/me（所在地字段服务端暂未提供，仅本地保留）
   Future<void> _confirm() async {
     final nickname = _nameController.text.trim();
     try {
-      await Api().post('user_update', data: {
+      await Api().put('user_update', data: {
         if (nickname.isNotEmpty) 'nickname': nickname,
-        if (_location != null && _location!.isNotEmpty) 'location': _location,
       });
     } catch (e) {
       LogUtil.e('资料保存失败: $e');

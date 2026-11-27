@@ -49,28 +49,32 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     }
   }
 
-  // 保存战报
+  // 保存战报：调用 POST /ai/generate-report 生成战报图
   Future<void> _handleSave() async {
+    if (_isSaving) return;
+    final catchId = int.tryParse(widget.record.rid ?? '');
     setState(() => _isSaving = true);
     try {
-      final result = await Api().post('report_save', data: {
-        'rid': widget.record.rid,
-        'template': _templates.isNotEmpty
-            ? _templates[_selectedTemplate]['rid']
-            : 'default',
+      final result = await Api().post('ai_generate_report', data: {
+        if (catchId != null) 'catch_id': catchId,
       });
       if (!mounted) return;
       setState(() => _isSaving = false);
-      if (result['success']) {
-        Fluttertoast.showToast(msg: '战报已保存到相册');
+      if (result['success'] == true) {
+        final report = result['data']?['report'];
+        final imageUrl = report?['image_url'];
+        Fluttertoast.showToast(
+            msg: imageUrl != null ? '战报已生成：$imageUrl' : '战报已生成');
       } else {
-        Fluttertoast.showToast(msg: result['status']['message']);
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '生成失败' : '生成失败');
       }
     } catch (e) {
-      LogUtil.e('战报保存失败: $e');
+      LogUtil.e('战报生成失败: $e');
       if (!mounted) return;
       setState(() => _isSaving = false);
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
+      Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
     }
   }
 
@@ -330,22 +334,25 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     );
   }
 
-  // 分享战报：弹出微信分享面板（好友 / 朋友圈）
+  // 分享战报：生成战报图后弹出微信分享面板（好友 / 朋友圈）
   Future<void> _handleShare() async {
     try {
-      final result = await Api().post('report_share', data: {
-        'rid': widget.record.rid,
+      final catchId = int.tryParse(widget.record.rid ?? '');
+      final result = await Api().post('ai_generate_report', data: {
+        if (catchId != null) 'catch_id': catchId,
       });
       if (!mounted) return;
-      if (result['success']) {
+      if (result['success'] == true) {
         WechatShareUtil.show(context, title: '我的路亚战报 | 路记');
       } else {
-        Fluttertoast.showToast(msg: result['status']['message']);
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '生成失败' : '生成失败');
       }
     } catch (e) {
       LogUtil.e('战报分享失败: $e');
       if (!mounted) return;
-      // mock 环境：直接走微信分享面板
+      // 生成失败时仍走本地微信分享面板
       WechatShareUtil.show(context, title: '我的路亚战报 | 路记');
     }
   }

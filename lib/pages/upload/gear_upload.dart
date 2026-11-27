@@ -56,26 +56,30 @@ class _GearUploadPageState extends State<GearUploadPage> {
 
     setState(() => _isSubmiting = true);
     try {
-      final result = await Api().post('gear_submit', data: {
+      final result = await Api().post('gears', data: {
+        'name':
+            '${_brandController.text.trim()} ${_modelController.text.trim()}',
         'category': _category,
-        'brand': _brandController.text.trim(),
-        'model': _modelController.text.trim(),
         'price': double.tryParse(_priceController.text.trim()),
-        'buy_at': _buyAtController.text.trim(),
+        if (_buyAtController.text.trim().isNotEmpty)
+          'purchase_date': _buyAtController.text.trim(),
+        'asset_ids': <int>[],
       });
       if (!mounted) return;
       setState(() => _isSubmiting = false);
-      if (result['success']) {
+      if (result['success'] == true) {
         Fluttertoast.showToast(msg: '装备已入库');
         Navigator.of(context).pop();
       } else {
-        Fluttertoast.showToast(msg: result['status']['message']);
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '提交失败' : '提交失败');
       }
     } catch (e) {
       LogUtil.e('装备提交失败: $e');
       if (!mounted) return;
       setState(() => _isSubmiting = false);
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
+      Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
     }
   }
 

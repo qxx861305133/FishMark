@@ -6,8 +6,9 @@ class Constants {
   // 调试模式
   static const bool isDebug = true;
 
-  // 本地模拟数据开关（无后端时全流程走通，接入真实后端时置为 false）
-  static const bool useMock = true;
+  // 本地模拟数据开关（true=全流程走 Mock；false=对接真实 API）
+  // 注意：真实 API 未提供的端点（图片上传、挑战系统）始终走 Mock
+  static const bool useMock = false;
 
   // APP名称
   static const String APP_NAME = '路记';

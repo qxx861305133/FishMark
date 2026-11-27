@@ -43,34 +43,16 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     super.dispose();
   }
 
-  // 更换头像：相册选图 → 上传 → user_update
+  // 更换头像：相册选图 → 本地预览（头像上传端点待服务端上线后接入）
   Future<void> _changeAvatar() async {
     if (_uploadingAvatar) return;
     final file = await MediaPickerUtil.pickSingleImage(context);
     if (!mounted || file == null) return;
     setState(() {
       _avatarPath = file.path;
-      _uploadingAvatar = true;
+      _uploadingAvatar = false;
     });
-    try {
-      final uploadResult = await Api().uploadAsset(file, 'upload_asset');
-      if (!mounted) return;
-      if (uploadResult['success'] && uploadResult['data'] != null) {
-        final url = uploadResult['data']['url'] ?? '';
-        await Api().post('user_update', data: {'avatar': url});
-        if (!mounted) return;
-        Fluttertoast.showToast(
-            msg: Global.t('头像已更新', 'Avatar updated'));
-      } else {
-        Fluttertoast.showToast(msg: uploadResult['status']?['message'] ?? '上传失败');
-      }
-    } catch (e) {
-      LogUtil.e('头像上传失败: $e');
-      if (!mounted) return;
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
-    } finally {
-      if (mounted) setState(() => _uploadingAvatar = false);
-    }
+    // TODO: 图片上传端点待服务端上线后接入，届时上传照片换取 avatar_asset_id 并 PUT /users/me
   }
 
   // 定位获取所在地：定位权限 → 当前坐标 → 天地图逆地理编码
@@ -102,25 +84,26 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     }
   }
 
-  // 保存资料：user_update
+  // 保存资料：PUT /users/me（服务端仅支持昵称/简介/头像资源ID）
   Future<void> _save() async {
     try {
-      final result = await Api().post('user_update', data: {
+      final result = await Api().put('user_update', data: {
         'nickname': _nameController.text.trim(),
-        'gender': _gender,
-        'birthday': _birthday,
-        'location': _location,
       });
       if (!mounted) return;
-      if (result['success']) {
+      if (result['success'] == true) {
         Fluttertoast.showToast(
             msg: Global.t('已保存', 'Saved'));
       } else {
-        Fluttertoast.showToast(msg: result['status']?['message'] ?? '保存失败');
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '保存失败' : '保存失败');
       }
     } catch (e) {
       LogUtil.e('资料保存失败: $e');
-      if (mounted) Fluttertoast.showToast(msg: '网络异常，请稍后重试');
+      if (mounted) {
+        Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
+      }
     }
   }
 

@@ -71,6 +71,34 @@ class CatchRecord {
     created_at = json['created_at'];
   }
 
+  /// 从 FishMark API 的 Catch 结构映射
+  /// （字段：id, user_id, fish_species, weight, length, photo_urls, note, catch_date, weather, temperature, created_at）
+  factory CatchRecord.fromApi(Map<String, dynamic> json) {
+    return CatchRecord(
+      rid: (json['id'] ?? json['rid'])?.toString(),
+      uid: (json['user_id'] ?? json['uid'])?.toString(),
+      fish: FishSpecies(
+        rid: json['fish_species_id']?.toString(),
+        name: json['fish_species'],
+      ),
+      weight: json['weight'] != null
+          ? double.tryParse(json['weight'].toString())
+          : null,
+      length: json['length'] != null
+          ? double.tryParse(json['length'].toString())
+          : null,
+      images: json['photo_urls'] != null
+          ? List<String>.from(json['photo_urls'])
+          : null,
+      notes: json['note'] ?? json['notes'],
+      caught_at: json['catch_date'] ?? json['caught_at'],
+      weather: json['weather'],
+      temperature: json['temperature']?.toString(),
+      status: json['is_public'] == false ? 'draft' : 'normal',
+      created_at: json['created_at'],
+    );
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['rid'] = rid;
@@ -148,6 +176,21 @@ class FishSpecies {
     description = json['description'];
     unlocked = json['unlocked'] ?? false;
     unlocked_at = json['unlocked_at'];
+  }
+
+  /// 从 FishMark API 的 FishSpecies 结构映射
+  /// （字段：id, name, name_en, scientific_name, category, rarity, image_url, description, catch_count ...）
+  factory FishSpecies.fromApi(Map<String, dynamic> json) {
+    final catchCount = json['catch_count'] ?? 0;
+    return FishSpecies(
+      rid: (json['id'] ?? json['rid'])?.toString(),
+      name: json['name'],
+      alias: json['name_en'] ?? json['scientific_name'],
+      cover: json['image_url'] ?? json['cover'],
+      habitat: json['category'],
+      description: json['description'],
+      unlocked: json['unlocked'] ?? (catchCount is num && catchCount > 0),
+    );
   }
 
   Map<String, dynamic> toJson() {

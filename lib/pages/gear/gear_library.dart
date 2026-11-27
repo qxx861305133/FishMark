@@ -43,14 +43,18 @@ class _GearLibraryPageState extends State<GearLibraryPage> {
 
   Future<void> _loadGears() async {
     try {
-      final result = await Api().get('gears');
+      // GET /gears：当前用户装备列表
+      final result = await Api().get('gears', queryParameters: {
+        'page': 1,
+        'per_page': 100,
+      });
       if (!mounted) return;
-      if (result['success'] && result['data'] is List) {
+      if (result['success'] == true && result['data'] is List) {
         setState(() {
           _loading = false;
           _gears.clear();
           for (final item in result['data']) {
-            _gears.add(Gear.fromJson(Map<String, dynamic>.from(item)));
+            _gears.add(Gear.fromApi(Map<String, dynamic>.from(item)));
           }
         });
       } else {
@@ -65,9 +69,13 @@ class _GearLibraryPageState extends State<GearLibraryPage> {
 
   Future<void> _loadCombos() async {
     try {
-      final result = await Api().get('gear_combos');
+      // GET /gear-combos：当前用户装备组合列表
+      final result = await Api().get('gear_combos', queryParameters: {
+        'page': 1,
+        'per_page': 100,
+      });
       if (!mounted) return;
-      if (result['success'] && result['data'] is List) {
+      if (result['success'] == true && result['data'] is List) {
         setState(() {
           for (final item in result['data']) {
             _combos.add(Map<String, dynamic>.from(item));
@@ -205,7 +213,7 @@ class _GearLibraryPageState extends State<GearLibraryPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${gear.brand ?? ''} ${gear.model ?? ''}',
+                  '${gear.brand ?? ''} ${gear.model ?? ''}'.trim(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

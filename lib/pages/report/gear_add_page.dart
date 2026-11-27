@@ -97,7 +97,7 @@ class _GearAddPageState extends State<GearAddPage> {
     if (status != null && mounted) setState(() => _status = status);
   }
 
-  // 保存：上传照片 → gear_submit
+  // 保存：提交装备信息（照片上传端点待服务端上线后接入）
   Future<void> _save() async {
     final brand = _rowControllers['品牌']?.text.trim() ?? '';
     final model = _rowControllers['型号']?.text.trim() ?? '';
@@ -111,39 +111,33 @@ class _GearAddPageState extends State<GearAddPage> {
     }
     setState(() => _submitting = true);
     try {
-      final imageUrls = <String>[];
-      for (final photo in _pickedPhotos) {
-        final uploadResult = await Api().uploadAsset(photo, 'upload_asset');
-        if (uploadResult['success'] && uploadResult['data'] != null) {
-          imageUrls.add(uploadResult['data']['url'] ?? '');
-        }
-      }
-      final result = await Api().post('gear_submit', data: {
+      // TODO: 照片上传端点待服务端上线后接入，届时上传照片换取 asset_ids
+      final result = await Api().post('gears', data: {
+        'name': '$brand $model',
         'category': 'rod',
-        'brand': brand,
-        'model': model,
-        'specs': {
+        'specifications': {
           for (final entry in _rowControllers.entries)
             if (entry.key != '品牌' && entry.key != '型号')
               entry.key: entry.value.text.trim(),
         },
-        'remark': _remarkController.text.trim(),
-        'status': _status,
-        'images': imageUrls,
+        'description': _remarkController.text.trim(),
+        'asset_ids': <int>[],
       });
       if (!mounted) return;
-      if (result['success']) {
-        Fluttertoast.showToast(msg: result['status']?['message'] ?? '装备已入库');
+      if (result['success'] == true) {
+        Fluttertoast.showToast(msg: '装备已入库');
         Navigator.of(context).pop();
       } else {
         setState(() => _submitting = false);
-        Fluttertoast.showToast(msg: result['status']?['message'] ?? '保存失败');
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '保存失败' : '保存失败');
       }
     } catch (e) {
       LogUtil.e('装备提交失败: $e');
       if (!mounted) return;
       setState(() => _submitting = false);
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
+      Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
     }
   }
 

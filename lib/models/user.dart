@@ -51,6 +51,24 @@ class User {
     created_at = json['created_at'];
   }
 
+  /// 从 FishMark API 的 User 结构映射
+  /// （字段：id, nickname, avatar_url, phone, subscription_type, created_at ...）
+  factory User.fromApiUser(Map<String, dynamic>? json, {String? phone}) {
+    if (json == null) {
+      return User(is_login: true, mobile: phone);
+    }
+    return User(
+      uid: json['id']?.toString(),
+      nickname: json['nickname'],
+      avatar: json['avatar_url'],
+      mobile: json['phone'] ?? phone,
+      account: json['phone'] ?? phone ?? '',
+      is_login: true,
+      subscribeTier: json['subscription_type'] ?? 'free',
+      created_at: json['created_at'],
+    );
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['uid'] = uid;

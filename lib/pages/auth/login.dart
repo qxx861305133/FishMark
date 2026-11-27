@@ -5,8 +5,8 @@ import 'package:remixicon/remixicon.dart';
 
 import 'package:FishMark/config/constants.dart';
 import 'package:FishMark/config/global.dart';
-import 'package:FishMark/pages/auth/profile_setup.dart';
 import 'package:FishMark/pages/auth/captcha_login.dart';
+import 'package:FishMark/pages/auth/register.dart';
 import 'package:FishMark/pages/auth/agreement_page.dart';
 import 'package:FishMark/pages/home.dart';
 import 'package:FishMark/widgets/ui_kit.dart';
@@ -48,21 +48,16 @@ class _LoginPageState extends State<LoginPage> {
                     const AppLogo(size: 88),
                     SizedBox(height: 88.w),
                     Text(
-                      '138 **** 9044',
+                      '每一尾皆是勋章',
                       style: TextStyle(
-                        fontSize: 32.sp,
+                        fontSize: 28.sp,
                         fontWeight: FontWeight.w700,
                         color: Constants.INK,
                       ),
                     ),
                     SizedBox(height: 24.w),
                     Text(
-                      '认证服务由中国联通提供',
-                      style: TextStyle(fontSize: 13.sp, color: Constants.GRAY),
-                    ),
-                    SizedBox(height: 8.w),
-                    Text(
-                      '未注册手机号验证通过后自动注册',
+                      '记录每一次出钓，遇见每一片水域',
                       style: TextStyle(fontSize: 13.sp, color: Constants.GRAY),
                     ),
                   ],
@@ -73,22 +68,22 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   children: [
                     LimeButton(
-                      text: '本机号码一键登录',
+                      text: '手机号密码登录',
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const ProfileSetupPage(),
+                            builder: (_) => const CaptchaLoginPage(),
                           ),
                         );
                       },
                     ),
                     SizedBox(height: 16.w),
                     GhostButton(
-                      text: '其他手机号登录',
+                      text: '注册新账号',
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const CaptchaLoginPage(),
+                            builder: (_) => const RegisterPage(),
                           ),
                         );
                       },

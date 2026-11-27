@@ -34,17 +34,19 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
     _loadReviews();
   }
 
-  // 加载详情
+  // 加载详情：GET /spots/{spot_id}
   Future<void> _loadDetail() async {
     try {
       final result = await Api().get(
         'spot_detail',
-        queryParameters: {'rid': widget.rid},
+        queryParameters: {'spot_id': widget.rid},
       );
       if (!mounted) return;
-      if (result['success'] && result['data'] != null) {
+      if (result['success'] == true && result['data'] != null) {
+        final data = Map<String, dynamic>.from(result['data']);
+        final item = data['spot'] ?? data;
         setState(() {
-          _spot = Spot.fromJson(Map<String, dynamic>.from(result['data']));
+          _spot = Spot.fromApi(Map<String, dynamic>.from(item));
           _loading = false;
         });
       } else {
@@ -57,15 +59,19 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
     }
   }
 
-  // 加载点评
+  // 加载打卡记录：GET /spots/{spot_id}/checkins
   Future<void> _loadReviews() async {
     try {
       final result = await Api().get(
-        'spot_reviews',
-        queryParameters: {'rid': widget.rid},
+        'spot_checkins',
+        queryParameters: {
+          'spot_id': widget.rid,
+          'page': 1,
+          'per_page': 20,
+        },
       );
       if (!mounted) return;
-      if (result['success'] && result['data'] is List) {
+      if (result['success'] == true && result['data'] is List) {
         setState(() {
           for (final item in result['data']) {
             _reviews.add(Map<String, dynamic>.from(item));
@@ -73,7 +79,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
         });
       }
     } catch (e) {
-      LogUtil.e('钓点点评加载失败: $e');
+      LogUtil.e('钓点打卡记录加载失败: $e');
     }
   }
 

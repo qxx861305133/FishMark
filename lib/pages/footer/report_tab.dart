@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:FishMark/config/constants.dart';
+import 'package:FishMark/config/global.dart';
 import 'package:FishMark/config/log_util.dart';
 import 'package:FishMark/http/api.dart';
 import 'package:FishMark/models/catch_record.dart';
@@ -30,21 +31,23 @@ class _ReportTabState extends State<ReportTab> {
 
   Future<void> _loadCatches() async {
     try {
-      final result = await Api().get('my_catches');
+      // GET /catches：当前用户的鱼获列表
+      final result = await Api().get('catches', queryParameters: {
+        'page': 1,
+        'per_page': 20,
+        if (Global.profile.user?.uid != null)
+          'user_id': Global.profile.user!.uid,
+      });
       if (!mounted) return;
-      if (result['success']) {
-        final data = result['data'];
-        if (data is List) {
-          setState(() {
-            _loading = false;
-            _catches.clear();
-            for (final item in data) {
-              _catches.add(CatchRecord.fromJson(Map<String, dynamic>.from(item)));
-            }
-          });
-        } else {
-          setState(() => _loading = false);
-        }
+      if (result['success'] == true && result['data'] is List) {
+        setState(() {
+          _loading = false;
+          _catches.clear();
+          for (final item in result['data']) {
+            _catches.add(
+                CatchRecord.fromApi(Map<String, dynamic>.from(item)));
+          }
+        });
       } else {
         setState(() => _loading = false);
       }

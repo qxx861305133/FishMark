@@ -127,6 +127,27 @@ class Medal {
     progress = json['progress'] ?? 0;
   }
 
+  /// 从 FishMark API 的 UserBadge 结构映射
+  /// （字段：badge{id,name,icon_url,rarity,description,...}, is_unlocked, progress, unlocked_at）
+  factory Medal.fromApi(Map<String, dynamic> json) {
+    final badge = json['badge'] is Map
+        ? Map<String, dynamic>.from(json['badge'])
+        : <String, dynamic>{};
+    return Medal(
+      rid: (badge['id'] ?? json['badge_id'] ?? json['rid'])?.toString(),
+      name: badge['name'],
+      icon: badge['icon_url'] ?? badge['icon'],
+      rarity: badge['rarity'] ?? 'common',
+      description: badge['description'],
+      condition: badge['condition_type'] != null
+          ? '${badge['condition_type']} ${badge['condition_value'] ?? ''}'
+          : null,
+      unlocked: json['is_unlocked'] ?? false,
+      unlocked_at: json['unlocked_at'],
+      progress: json['progress'] ?? 0,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['rid'] = rid;

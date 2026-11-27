@@ -58,18 +58,26 @@ class _FishSpeciesListPageState extends State<FishSpeciesListPage> {
 
   Future<void> _loadSpecies() async {
     try {
-      final result = await Api().get('fish_species');
+      // GET /fish-species：data.species 数组
+      final result = await Api().get('fish_species', queryParameters: {
+        'page': 1,
+        'per_page': 50,
+      });
       if (!mounted) return;
-      if (result['success'] && result['data'] is List) {
+      if (result['success'] == true) {
         int unlocked = 0;
         _species.clear();
         _loadMoreCount = 0;
-        for (final item in result['data']) {
-          final species = FishSpecies.fromJson(
-            Map<String, dynamic>.from(item),
-          );
-          _species.add(species);
-          if (species.unlocked == true) unlocked++;
+        final data = Map<String, dynamic>.from(result['data'] ?? {});
+        final items = data['species'];
+        if (items is List) {
+          for (final item in items) {
+            final species = FishSpecies.fromApi(
+              Map<String, dynamic>.from(item),
+            );
+            _species.add(species);
+            if (species.unlocked == true) unlocked++;
+          }
         }
         setState(() {
           _unlockedCount = unlocked;

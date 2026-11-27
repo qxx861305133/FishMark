@@ -15,7 +15,10 @@ import 'package:FishMark/widgets/round_button.dart';
 
 /// @desc 鱼获记录上传页
 class CatchUploadPage extends StatefulWidget {
-  const CatchUploadPage({super.key});
+  // AI识鱼结果带入的鱼种名（预填）
+  final String initialFishName;
+
+  const CatchUploadPage({super.key, this.initialFishName = ''});
 
   @override
   State<CatchUploadPage> createState() => _CatchUploadPageState();
@@ -33,6 +36,14 @@ class _CatchUploadPageState extends State<CatchUploadPage> {
   bool _isSubmiting = false;
   // 上钩时间
   DateTime _caughtAt = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialFishName.isNotEmpty) {
+      _fishNameController.text = widget.initialFishName;
+    }
+  }
 
   @override
   void dispose() {
@@ -95,44 +106,39 @@ class _CatchUploadPageState extends State<CatchUploadPage> {
 
     setState(() => _isSubmiting = true);
     try {
-      // 上传图片
-      final imageUrls = <String>[];
-      for (final image in _images) {
-        final uploadResult = await Api().uploadAsset(image, 'upload_asset');
-        if (uploadResult['success'] && uploadResult['data'] != null) {
-          imageUrls.add(uploadResult['data']['url'] ?? '');
-        }
-      }
-
-      // 提交鱼获
-      final result = await Api().post('catch_submit', data: {
-        'fish_name': _fishNameController.text.trim(),
+      // TODO: 图片上传端点待服务端上线后接入，届时将本地照片上传换取 asset_ids
+      final result = await Api().post('catches', data: {
+        'fish_species': _fishNameController.text.trim(),
         'weight': double.tryParse(_weightController.text.trim()),
         'length': double.tryParse(_lengthController.text.trim()),
-        'notes': _notesController.text.trim(),
+        'note': _notesController.text.trim(),
         'weather': _weatherController.text.trim(),
-        'caught_at': _caughtAt.toIso8601String(),
-        'images': imageUrls,
+        'catch_date':
+            '${_caughtAt.year}-${_caughtAt.month.toString().padLeft(2, '0')}-${_caughtAt.day.toString().padLeft(2, '0')}',
+        'asset_ids': <int>[],
       });
 
       if (!mounted) return;
       setState(() => _isSubmiting = false);
-      if (result['success']) {
-        final record = CatchRecord.fromJson(
-          Map<String, dynamic>.from(result['data'] ?? {}),
+      if (result['success'] == true) {
+        final data = Map<String, dynamic>.from(result['data'] ?? {});
+        final record = CatchRecord.fromApi(
+          Map<String, dynamic>.from(data['catch'] ?? data),
         );
         // 生成战报预览
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => ReportPreviewPage(record: record)),
         );
       } else {
-        Fluttertoast.showToast(msg: result['status']['message']);
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '提交失败' : '提交失败');
       }
     } catch (e) {
       LogUtil.e('鱼获提交失败: $e');
       if (!mounted) return;
       setState(() => _isSubmiting = false);
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
+      Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
     }
   }
 

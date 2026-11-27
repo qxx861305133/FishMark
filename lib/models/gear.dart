@@ -64,6 +64,28 @@ class Gear {
     created_at = json['created_at'];
   }
 
+  /// 从 FishMark API 的 Gear 结构映射
+  /// （字段：id, user_id, category, name, price, photo_urls/thumbnail_urls, usage_count, catch_count ...）
+  factory Gear.fromApi(Map<String, dynamic> json) {
+    final photoUrls = json['thumbnail_urls'] ?? json['photo_urls'];
+    return Gear(
+      rid: (json['id'] ?? json['rid'])?.toString(),
+      uid: json['user_id']?.toString(),
+      category: json['category'] ?? 'rod',
+      model: json['name'],
+      price: json['price'] != null
+          ? double.tryParse(json['price'].toString())
+          : null,
+      images: photoUrls is List
+          ? photoUrls.map((e) => e.toString()).toList()
+          : null,
+      notes: json['description'],
+      usage_count: json['usage_count'] ?? 0,
+      catch_count: json['catch_count'] ?? 0,
+      created_at: json['created_at'],
+    );
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['rid'] = rid;

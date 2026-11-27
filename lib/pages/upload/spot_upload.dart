@@ -60,28 +60,36 @@ class _SpotUploadPageState extends State<SpotUploadPage> {
 
     setState(() => _isSubmiting = true);
     try {
-      final result = await Api().post('spot_submit', data: {
+      final lat = double.tryParse(_latController.text.trim());
+      final lng = double.tryParse(_lngController.text.trim());
+      if (lat == null || lng == null) {
+        if (!mounted) return;
+        setState(() => _isSubmiting = false);
+        Fluttertoast.showToast(msg: '请填写有效的经纬度坐标');
+        return;
+      }
+      final result = await Api().post('spots', data: {
         'name': _nameController.text.trim(),
         'address': _addressController.text.trim(),
-        'type': _type,
-        'lat': double.tryParse(_latController.text.trim()),
-        'lng': double.tryParse(_lngController.text.trim()),
-        'fee': _feeController.text.trim(),
-        'open_time': _openTimeController.text.trim(),
+        'water_type': _type,
+        'latitude': lat,
+        'longitude': lng,
       });
       if (!mounted) return;
       setState(() => _isSubmiting = false);
-      if (result['success']) {
+      if (result['success'] == true) {
         Fluttertoast.showToast(msg: '钓点提交成功，感谢分享');
         Navigator.of(context).pop();
       } else {
-        Fluttertoast.showToast(msg: result['status']['message']);
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '提交失败' : '提交失败');
       }
     } catch (e) {
       LogUtil.e('钓点提交失败: $e');
       if (!mounted) return;
       setState(() => _isSubmiting = false);
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
+      Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
     }
   }
 

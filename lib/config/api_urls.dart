@@ -1,84 +1,81 @@
-/// @desc API urls
+/// @desc API urls —— FishMark 移动端 RESTful API（https://api.fishmark.me/apidocs/）
+/// 所有路径基于 baseUrl：https://api.fishmark.me/api/v1
+/// 含 {xxx} 占位符的路径由拦截器根据 queryParameters 自动替换
 // ignore: constant_identifier_names
 const ApiUrls = {
-  // 启动与通用
-  'initial_settings': '/settings/init', // GET 初始化配置
-  'agreement': '/settings/agreement', // GET 用户协议/隐私政策
-  'regions': '/regions', // GET 地区列表（省市区）
-  'interests': '/interests', // GET 兴趣标签
+  // ===== 认证 =====
+  'auth_login': '/auth/login', // POST 手机号+密码登录
+  'auth_register': '/auth/register', // POST 用户注册
+  'auth_logout': '/auth/logout', // POST 退出登录（Token 加入黑名单）
+  'auth_refresh': '/auth/refresh', // POST 刷新访问令牌
+  'auth_me': '/auth/me', // GET 当前登录用户信息
+  'auth_password': '/auth/password', // PUT 修改密码
+  'auth_email_send_code': '/auth/email/send-code', // POST 发送邮箱验证码
+  'auth_email_verify': '/auth/email/verify', // POST 校验邮箱验证码
+  'auth_wechat_login': '/auth/wechat/login', // POST 微信登录
+  'auth_wechat_bind': '/auth/wechat/bind', // POST 绑定微信账号
+  'auth_apple_login': '/auth/apple/login', // POST Apple 登录
+  'auth_apple_bind': '/auth/apple/bind', // POST 绑定 Apple 账号
+  'auth_apple_unbind': '/auth/apple/bind', // DELETE 解绑 Apple 账号
+  'auth_wechat_unbind': '/auth/wechat/bind', // DELETE 解绑微信账号
 
-  // 用户系统
-  'send_sms': '/sms/send', // POST 发送验证码
-  'sms_login': '/auth/sms_login', // POST 验证码登录
-  'auth_logout': '/auth/logout', // POST 退出登录
-  'user_info': '/user/info', // GET 当前用户信息
-  'user_update': '/user/update', // POST 更新个人信息
-  'user_init_profile': '/user/init_profile', // POST 兴趣/地区初始化
+  // ===== 用户 =====
+  'user_update': '/users/me', // PUT 更新当前用户资料
+  'user_stats': '/users/me/stats', // GET 当前用户统计数据
+  'user_subscription': '/users/me/subscription', // GET 当前用户订阅信息
+  'user_timeline': '/users/me/timeline', // GET 当前用户时间轴
+  'user_units': '/users/me/units', // GET/PUT 计量单位偏好
+  'user_badges': '/users/me/badges', // GET 当前用户已获得勋章
+  'user_public': '/users/{user_id}', // GET 用户公开资料
+  'user_public_catches': '/users/{user_id}/catches', // GET 用户公开鱼获列表
 
-  // 首页
-  'banners': '/banners', // GET Banner列表
-  'home_feeds': '/feeds', // GET 鱼获动态列表
-  'feed_detail': '/feeds/get_feed', // GET 鱼获动态详情
-  'feed_like': '/feeds/like', // POST 点赞/取消点赞
-  'feed_comments': '/feeds/comments', // GET 动态评论
-  'feed_comment': '/feeds/comment', // POST 发表评论
+  // ===== 鱼获 =====
+  'catches': '/catches', // GET 公开鱼获列表 / POST 创建鱼获记录
+  'catch_detail': '/catches/{catch_id}', // GET 鱼获详情
+  'catch_update': '/catches/{catch_id}', // PUT 更新鱼获记录
+  'catch_delete': '/catches/{catch_id}', // DELETE 删除鱼获记录
+  'catch_like': '/catches/{catch_id}/like', // POST 点赞鱼获
+  'catch_unlike': '/catches/{catch_id}/unlike', // POST 取消点赞鱼获
 
-  // 探索
-  'spots': '/spots', // GET 钓点列表
-  'spot_map': '/spots/map', // GET 地图钓点聚合
-  'spot_detail': '/spots/get_spot', // GET 钓点详情
-  'spot_submit': '/spots/submit', // POST 钓点上传
-  'spot_reviews': '/spots/reviews', // GET 钓点点评
-  'fish_species': '/fishes', // GET 鱼种图鉴列表
-  'fish_species_detail': '/fishes/get_fish', // GET 鱼种详情
+  // ===== 钓点 =====
+  'spots': '/spots', // GET 公开钓点列表 / POST 创建钓点
+  'spot_detail': '/spots/{spot_id}', // GET 钓点详情
+  'spot_update': '/spots/{spot_id}', // PUT 更新钓点
+  'spot_delete': '/spots/{spot_id}', // DELETE 删除钓点
+  'spots_nearby': '/spots/nearby', // GET 附近钓点
+  'spot_checkin': '/spots/{spot_id}/checkin', // POST 钓点打卡
+  'spot_checkins': '/spots/{spot_id}/checkins', // GET 钓点打卡记录
+  'spot_like': '/spots/{spot_id}/like', // POST 点赞钓点
+  'spot_verify': '/spots/{spot_id}/verify', // POST 验证钓点
 
-  // 上传
-  'catch_submit': '/catches/submit', // POST 鱼获记录提交
-  'catch_detail': '/catches/get_catch', // GET 鱼获详情
-  'catch_delete': '/catches/delete', // POST 删除鱼获
+  // ===== 装备 =====
+  'gears': '/gears', // GET 当前用户装备列表 / POST 创建装备
+  'gear_detail': '/gears/{gear_id}', // GET 装备详情
+  'gear_update': '/gears/{gear_id}', // PUT 更新装备
+  'gear_delete': '/gears/{gear_id}', // DELETE 删除装备
+  'gear_combos': '/gear-combos', // GET 装备组合列表 / POST 创建装备组合
+  'gear_combo_delete': '/gear-combos/{combo_id}', // DELETE 删除装备组合
 
-  // AI识鱼
-  'ai_fish_recognize': '/ai/fish/recognize', // POST AI识鱼（阿里云百炼）
-  'ai_fish_result': '/ai/fish/result', // GET 识别结果轮询
+  // ===== 鱼种图鉴 =====
+  'fish_species': '/fish-species', // GET 鱼种图鉴列表
+  'fish_species_detail': '/fish-species/{species_id}', // GET 鱼种详情
 
-  // 战报
-  'report_templates': '/reports/templates', // GET 战报模板
-  'report_generate': '/reports/generate', // POST 生成战报分享卡
-  'report_save': '/reports/save', // POST 保存战报
-  'report_share': '/reports/share', // POST 分享战报
+  // ===== 勋章 =====
+  'badges': '/badges', // GET 全部可用勋章
+  'badges_me': '/badges/me', // GET 当前用户勋章及进度
+  'badge_detail': '/badges/{badge_id}', // GET 勋章详情
+  'badge_request_physical': '/badges/{badge_id}/request-physical', // POST 申请实体勋章寄送
 
-  // 装备库
-  'gears': '/gears', // GET 装备列表
-  'gear_detail': '/gears/get_gear', // GET 装备详情
-  'gear_submit': '/gears/submit', // POST 装备上传
-  'gear_combos': '/gears/combos', // GET 装备组合列表
-  'gear_combo_submit': '/gears/combos/submit', // POST 装备组合上传
-  'gear_delete': '/gears/delete', // POST 删除装备
+  // ===== 轮换图 / 静态页 / 笔记 =====
+  'banner': '/banners/{serial_no}', // GET 指定页面位置的轮换图
+  'page': '/pages/{name}', // GET 指定标识的可见静态页面
+  'notes': '/notes', // GET 已发布笔记列表
+  'note_detail': '/notes/{note_id}', // GET 笔记详情
 
-  // 挑战系统
-  'challenges': '/challenges', // GET 挑战列表
-  'challenge_detail': '/challenges/get_challenge', // GET 挑战详情
-  'challenge_join': '/challenges/join', // POST 参与挑战
-  'challenge_feedback': '/challenges/feedback', // POST 完成反馈
+  // ===== AI =====
+  'ai_recognize': '/ai/recognize', // POST AI 识鱼（image_base64 / image_url 二选一）
+  'ai_generate_report': '/ai/generate-report', // POST 生成鱼获分享战报
 
-  // 勋章与成就
-  'medals': '/medals', // GET 勋章列表
-  'medal_detail': '/medals/get_medal', // GET 勋章详情
-  'achievements': '/achievements', // GET 成就列表
-
-  // 我的/数字履历
-  'my_overview': '/user/overview', // GET 数据总览
-  'my_timeline': '/user/timeline', // GET 履历时间轴
-  'my_catches': '/catches/my_list', // GET 我的鱼获
-  'my_collection': '/user/collection', // GET 我的图鉴
-
-  // 订阅系统
-  'subscription_plans': '/subscription/plans', // GET 套餐列表
-  'subscription_buy': '/subscription/buy', // POST 购买订阅
-  'subscription_renew': '/subscription/renew', // POST 续费管理
-  'subscription_cancel': '/subscription/cancel', // POST 取消订阅
-
-  // 通用
-  'upload_asset': '/assets/upload', // POST 上传附件
-  'bind_device': '/devices/bind', // POST 绑定设备
+  // ===== 通用 =====
+  'health': '/health', // GET 健康检查
 };

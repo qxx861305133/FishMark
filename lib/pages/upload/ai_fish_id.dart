@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -40,53 +41,37 @@ class _AiFishIdPageState extends State<AiFishIdPage> {
     await _recognize(bytes, filename: file.name);
   }
 
-  // 调用AI识鱼接口
+  // 调用AI识鱼接口（POST /ai/recognize：JSON body，图片 base64）
   Future<void> _recognize(Uint8List bytes, {String filename = 'fish.jpg'}) async {
     setState(() => _recognizing = true);
     try {
-      // 上传图片并提交识别任务
-      final result = await Api().uploadBytes(
-        bytes,
-        'ai_fish_recognize',
-        filename: filename,
-      );
+      final result = await Api().post('ai_recognize', data: {
+        'image_base64': base64Encode(bytes),
+      });
       if (!mounted) return;
-      if (result['success']) {
-        final taskId = result['data']?['task_id'];
-        // 直接返回结果 or 跳转结果页轮询
-        if (result['data']?['fish'] != null) {
-          _goResult(taskId, Map<String, dynamic>.from(result['data']));
-        } else {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => AiFishResultPage(taskId: taskId?.toString() ?? ''),
+      final recognition = result['data']?['recognition'];
+      if (result['success'] == true && recognition != null) {
+        setState(() => _recognizing = false);
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AiFishResultPage(
+              recognition: Map<String, dynamic>.from(recognition),
             ),
-          );
-        }
+          ),
+        );
       } else {
         setState(() => _recognizing = false);
-        Fluttertoast.showToast(msg: result['status']['message']);
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '识别失败' : '识别失败');
       }
     } catch (e) {
       LogUtil.e('AI识鱼失败: $e');
       if (!mounted) return;
       setState(() => _recognizing = false);
-      Fluttertoast.showToast(msg: '识别服务异常，请稍后重试');
+      Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
     }
-  }
-
-  // 进入结果页
-  void _goResult(String? taskId, Map<String, dynamic> data) {
-    if (!mounted) return;
-    setState(() => _recognizing = false);
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AiFishResultPage(
-          taskId: taskId?.toString() ?? '',
-          initialData: data,
-        ),
-      ),
-    );
   }
 
   @override

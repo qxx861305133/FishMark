@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -37,36 +38,36 @@ class _AiFishRecognizingPageState extends State<AiFishRecognizingPage> {
     final sw = Stopwatch()..start();
     try {
       final bytes = await File(widget.imagePath).readAsBytes();
-      final result = await Api().uploadBytes(
-        bytes,
-        'ai_fish_recognize',
-        filename: 'fish_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      );
+      // POST /ai/recognize：JSON body，图片 base64
+      final result = await Api().post('ai_recognize', data: {
+        'image_base64': base64Encode(bytes),
+      });
       if (!mounted) return;
       // 保证识别动效至少展示 2 秒，避免一闪而过
       final remain = const Duration(seconds: 2) - sw.elapsed;
       if (remain > Duration.zero) await Future.delayed(remain);
       if (!mounted) return;
 
-      if (result['success']) {
-        final data = result['data'];
+      if (result['success'] == true && result['data']?['recognition'] != null) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => AiFishResultPage(
-              taskId: data?['task_id']?.toString() ?? '',
-              initialData:
-                  data == null ? null : Map<String, dynamic>.from(data),
+              recognition: Map<String, dynamic>.from(
+                result['data']['recognition'],
+              ),
             ),
           ),
         );
       } else {
-        Fluttertoast.showToast(msg: result['status']?['message'] ?? '识别失败');
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '识别失败' : '识别失败');
         Navigator.of(context).pop();
       }
     } catch (e) {
       LogUtil.e('AI识鱼失败: $e');
       if (!mounted) return;
-      Fluttertoast.showToast(msg: '识别服务异常，请稍后重试');
+      Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
       Navigator.of(context).pop();
     }
   }

@@ -104,50 +104,45 @@ class _SpotInfoPageState extends State<SpotInfoPage> {
     });
   }
 
-  // 提交钓点：先上传图片，再提交信息
+  // 提交钓点：提交钓点信息（照片上传端点待服务端上线后接入）
   Future<void> _submit() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       Fluttertoast.showToast(msg: '请填写钓点名称');
       return;
     }
+    if (widget.latLng == null) {
+      Fluttertoast.showToast(msg: '请先在地图上选择钓点位置');
+      return;
+    }
     setState(() => _submitting = true);
     try {
-      // 上传照片
-      final imageUrls = <String>[];
-      for (final photo in _photos) {
-        final uploadResult = await Api().uploadAsset(photo, 'upload_asset');
-        if (uploadResult['success'] && uploadResult['data'] != null) {
-          imageUrls.add(uploadResult['data']['url'] ?? '');
-        }
-      }
-
-      // 提交钓点信息
-      final result = await Api().post('spot_submit', data: {
+      // TODO: 照片上传端点待服务端上线后接入，届时上传照片换取 asset_ids
+      final result = await Api().post('spots', data: {
         'name': name,
         'address': _addrController.text.trim(),
-        'type': _waterType,
-        'desc': _descController.text.trim(),
-        'lat': widget.latLng?.latitude,
-        'lng': widget.latLng?.longitude,
-        'images': imageUrls,
-        'fish_names': _fishes.map((f) => f.name).toList(),
+        'description': _descController.text.trim(),
+        'water_type': _waterType,
+        'latitude': widget.latLng!.latitude,
+        'longitude': widget.latLng!.longitude,
+        'asset_ids': <int>[],
       });
       if (!mounted) return;
-      if (result['success']) {
-        Fluttertoast.showToast(
-            msg: result['status']?['message'] ?? '钓点已提交审核');
+      if (result['success'] == true) {
+        Fluttertoast.showToast(msg: '钓点已提交审核');
         // 返回到地图选点上一页之上（连退两层回到入口）
         Navigator.of(context)..pop()..pop();
       } else {
         setState(() => _submitting = false);
-        Fluttertoast.showToast(msg: result['status']?['message'] ?? '提交失败');
+        final error = result['error'];
+        Fluttertoast.showToast(
+            msg: error is Map ? error['message'] ?? '提交失败' : '提交失败');
       }
     } catch (e) {
       LogUtil.e('钓点提交失败: $e');
       if (!mounted) return;
       setState(() => _submitting = false);
-      Fluttertoast.showToast(msg: '网络异常，请稍后重试');
+      Fluttertoast.showToast(msg: '$e'.replaceAll('Exception: ', ''));
     }
   }
 

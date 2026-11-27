@@ -28,19 +28,21 @@ class _FishSpeciesDetailPageState extends State<FishSpeciesDetailPage> {
     _loadDetail();
   }
 
-  // 加载详情补充
+  // 加载详情补充：GET /fish-species/{species_id}
   Future<void> _loadDetail() async {
     if (_species.rid == null) return;
     try {
       final result = await Api().get(
         'fish_species_detail',
-        queryParameters: {'rid': _species.rid},
+        queryParameters: {'species_id': _species.rid},
       );
       if (!mounted) return;
-      if (result['success'] && result['data'] != null) {
+      if (result['success'] == true && result['data'] != null) {
+        final data = Map<String, dynamic>.from(result['data']);
+        final item = data['species'] ?? data;
         setState(() {
-          _species = FishSpecies.fromJson(
-            Map<String, dynamic>.from(result['data']),
+          _species = FishSpecies.fromApi(
+            Map<String, dynamic>.from(item),
           );
         });
       }
@@ -112,10 +114,13 @@ class _FishSpeciesDetailPageState extends State<FishSpeciesDetailPage> {
                   children: [
                     _buildTag(_habitatLabel(species.habitat),
                         Constants.PRIMARY_COLOR),
-                    SizedBox(width: 8.w),
-                    _buildTag(
-                        _difficultyLabel(species.difficulty),
-                        Constants.HIGHLIGHT_COLOR),
+                    // 难度：服务端暂未提供该字段，有值才展示
+                    if (species.difficulty != null) ...[
+                      SizedBox(width: 8.w),
+                      _buildTag(
+                          _difficultyLabel(species.difficulty),
+                          Constants.HIGHLIGHT_COLOR),
+                    ],
                   ],
                 ),
               ],

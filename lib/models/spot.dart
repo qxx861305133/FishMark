@@ -79,6 +79,42 @@ class Spot {
     created_at = json['created_at'];
   }
 
+  /// 从 FishMark API 的 Spot 结构映射
+  /// （字段：id, name, photo_urls/thumbnail_urls, latitude, longitude, address, water_type, description, checkin_count, like_count ...）
+  factory Spot.fromApi(Map<String, dynamic> json, {double? distance}) {
+    List<String>? fishNames;
+    if (json['fish_species'] is List) {
+      fishNames = (json['fish_species'] as List)
+          .map((e) => e is Map ? (e['name']?.toString() ?? '') : e.toString())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    final photoUrls = json['thumbnail_urls'] ?? json['photo_urls'];
+    return Spot(
+      rid: (json['id'] ?? json['rid'])?.toString(),
+      name: json['name'],
+      cover: photoUrls is List && photoUrls.isNotEmpty
+          ? photoUrls.first.toString()
+          : json['cover'],
+      lat: json['latitude'] != null
+          ? double.tryParse(json['latitude'].toString())
+          : null,
+      lng: json['longitude'] != null
+          ? double.tryParse(json['longitude'].toString())
+          : null,
+      address: json['address'],
+      type: json['water_type'] ?? 'river',
+      fish_names: fishNames,
+      description: json['description'],
+      reviews_count: json['checkin_count'],
+      distance: distance ?? (json['distance'] != null
+          ? double.tryParse(json['distance'].toString())
+          : null),
+      uid: json['user_id']?.toString(),
+      created_at: json['created_at'],
+    );
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['rid'] = rid;

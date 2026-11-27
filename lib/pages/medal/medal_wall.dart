@@ -37,14 +37,22 @@ class _MedalWallPageState extends State<MedalWallPage> {
 
   Future<void> _loadMedals() async {
     try {
-      final result = await Api().get('medals');
+      // GET /users/me/badges：data 为 {badges: [...], total, pages} 嵌套结构
+      final result = await Api().get('user_badges', queryParameters: {
+        'page': 1,
+        'per_page': 100,
+      });
       if (!mounted) return;
-      if (result['success'] && result['data'] is List) {
+      if (result['success'] == true && result['data'] != null) {
+        final data = Map<String, dynamic>.from(result['data']);
+        final items = data['badges'] ?? [];
         setState(() {
           _loading = false;
           _medals.clear();
-          for (final item in result['data']) {
-            _medals.add(Medal.fromJson(Map<String, dynamic>.from(item)));
+          if (items is List) {
+            for (final item in items) {
+              _medals.add(Medal.fromApi(Map<String, dynamic>.from(item)));
+            }
           }
         });
       } else {
